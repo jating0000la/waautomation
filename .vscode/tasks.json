@@ -1,0 +1,28 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start WhatsApp Web.js API",
+			"type": "shell",
+			"command": "npm start",
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Start WhatsApp Bulk Messaging Server",
+			"type": "shell",
+			"command": "node index.js",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Start WhatsApp Bulk Messaging Server",
+			"type": "shell",
+			"command": "node index.js",
+			"args": [],
+			"isBackground": false,
+			"group": "build"
+		}
+	]
+}

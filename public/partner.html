@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Partner Methods</title>
+  <style>body{font-family:Arial,sans-serif;margin:2rem;}label{display:block;margin-top:1rem;}input,textarea{width:100%;padding:0.5rem;margin-top:0.2rem;}button{margin-top:1rem;padding:0.5rem 1rem;background:#25d366;color:#fff;border:none;cursor:pointer;}a{display:inline-block;margin-top:2rem;}</style>
+</head>
+<body>
+  <h1>Partner Methods</h1>
+  <button onclick="getInstances()">Get Partner Instances</button>
+  <div id="result"></div>
+  <a href="index.html">&larr; Back to Main</a>
+  <script>
+    async function getInstances() {
+      const res = await fetch('/partner/instances');
+      document.getElementById('result').innerText = await res.text();
+    }
+  </script>
+</body>
+</html>

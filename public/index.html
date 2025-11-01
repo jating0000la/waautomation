@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WhatsApp Automation Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="assets/styles/app.css" />
+  <style>
+    body { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+      min-height: 100vh; 
+      padding-bottom: 40px;
+    }
+    .navbar {
+      background: linear-gradient(135deg, #25D366 0%, #128C7E 100%) !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .navbar-brand {
+      font-weight: bold;
+      font-size: 1.5rem;
+      letter-spacing: 1px;
+    }
+    .container.main-container {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      margin-top: 20px;
+      box-shadow: 0 10px 50px rgba(0,0,0,0.2);
+    }
+    .page-header {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 15px;
+      padding: 30px;
+      margin-bottom: 30px;
+      border-left: 5px solid #25D366;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    .page-header h1 {
+      color: #2c3e50;
+      font-weight: 700;
+      margin: 0;
+    }
+    .card {
+      border: none;
+      border-radius: 15px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+      height: 100%;
+    }
+    .card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+    }
+    .card-header {
+      background: linear-gradient(135deg, #25D366 0%, #128C7E 100%) !important;
+      color: white !important;
+      font-weight: 600;
+      padding: 20px;
+      font-size: 1.1rem;
+      border: none !important;
+    }
+    .list-group-item {
+      border: none;
+      border-bottom: 1px solid #f0f0f0;
+      padding: 15px 20px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .list-group-item:hover {
+      background: linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%);
+      padding-left: 30px;
+      color: #25D366;
+      font-weight: 500;
+    }
+    .list-group-item i {
+      margin-right: 10px;
+      width: 20px;
+      text-align: center;
+    }
+    .bulk-suite-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 15px;
+      padding: 30px;
+      margin-top: 20px;
+    }
+    .bulk-suite-card .card-header {
+      background: rgba(255,255,255,0.2) !important;
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    .bulk-link {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+      transition: all 0.3s ease;
+      color: white !important;
+      text-decoration: none !important;
+      display: block;
+      font-weight: 500;
+    }
+    .bulk-link:hover {
+      background: rgba(255,255,255,0.3);
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .btn-whatsapp {
+      background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+      border: none;
+      color: white;
+      padding: 12px 25px;
+      border-radius: 10px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(37,211,102,0.3);
+    }
+    .btn-whatsapp:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(37,211,102,0.5);
+      color: white;
+    }
+    footer {
+      color: white;
+      padding: 20px;
+      margin-top: 40px;
+      font-weight: 500;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .icon-box {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+      border-radius: 10px;
+      line-height: 40px;
+      text-align: center;
+      color: white;
+      margin-right: 10px;
+      box-shadow: 0 4px 10px rgba(37,211,102,0.3);
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+      <a class="navbar-brand" href="#">
+        <i class="fab fa-whatsapp me-2"></i>WA Automation
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="bulk-dashboard.html"><i class="fas fa-tachometer-alt me-1"></i>Bulk Suite</a></li>
+          <li class="nav-item"><a class="nav-link" href="template-builder.html"><i class="fas fa-file-alt me-1"></i>Templates</a></li>
+          <li class="nav-item"><a class="nav-link" href="audience-manager.html"><i class="fas fa-users me-1"></i>Audience</a></li>
+          <li class="nav-item"><a class="nav-link" href="compliance-center.html"><i class="fas fa-shield-alt me-1"></i>Compliance</a></li>
+          <li class="nav-item"><a class="nav-link" href="account.html"><i class="fas fa-user-circle me-1"></i>Account</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container main-container">
+    <div class="page-header">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1><i class="fas fa-rocket icon-box"></i>Platform Overview</h1>
+          <p class="text-muted mb-0 mt-2">Powerful WhatsApp automation at your fingertips</p>
+        </div>
+        <a href="bulk-dashboard.html" class="btn btn-whatsapp">
+          <i class="fas fa-chart-line me-2"></i>Go to Bulk Dashboard
+        </a>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="card">
+          <div class="card-header">
+            <i class="fas fa-comments me-2"></i>Basic Messaging
+          </div>
+          <div class="list-group list-group-flush">
+            <a class="list-group-item" href="send-message.html"><i class="fas fa-comment-dots"></i>Send Message</a>
+            <a class="list-group-item" href="send-media.html"><i class="fas fa-photo-video"></i>Send Media</a>
+            <a class="list-group-item" href="send-file-by-url.html"><i class="fas fa-link"></i>Send File by URL</a>
+            <a class="list-group-item" href="send-location.html"><i class="fas fa-map-marker-alt"></i>Send Location</a>
+            <a class="list-group-item" href="send-contact.html"><i class="fas fa-address-card"></i>Send Contact</a>
+            <a class="list-group-item" href="send-reaction.html"><i class="fas fa-smile"></i>Send Reaction</a>
+            <a class="list-group-item" href="forward-messages.html"><i class="fas fa-share"></i>Forward Messages</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-4">
+        <div class="card">
+          <div class="card-header">
+            <i class="fas fa-users-cog me-2"></i>Groups & Management
+          </div>
+          <div class="list-group list-group-flush">
+            <a class="list-group-item" href="create-group.html"><i class="fas fa-plus-circle"></i>Create Group</a>
+            <a class="list-group-item" href="group-management.html"><i class="fas fa-users"></i>Group Management</a>
+            <a class="list-group-item" href="groups.html"><i class="fas fa-layer-group"></i>View Groups</a>
+            <a class="list-group-item" href="account.html"><i class="fas fa-user-shield"></i>Account & Device</a>
+            <a class="list-group-item" href="calls.html"><i class="fas fa-phone"></i>Calls</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-4">
+        <div class="card">
+          <div class="card-header">
+            <i class="fas fa-tools me-2"></i>System & Tools
+          </div>
+          <div class="list-group list-group-flush">
+            <a class="list-group-item" href="message-logs.html"><i class="fas fa-history"></i>Message Logs</a>
+            <a class="list-group-item" href="database.html"><i class="fas fa-database"></i>Database Management</a>
+            <a class="list-group-item" href="webhook.html"><i class="fas fa-webhook"></i>Webhook</a>
+            <a class="list-group-item" href="statuses.html"><i class="fas fa-chart-pie"></i>Statuses</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bulk-suite-card mt-4">
+      <div class="card-header">
+        <h4 class="mb-0"><i class="fas fa-rocket me-2"></i>Bulk Messaging Suite</h4>
+      </div>
+      <div class="row g-3">
+        <div class="col-sm-6 col-md-4 col-lg-3">
+          <a href="bulk-dashboard.html" class="bulk-link">
+            <i class="fas fa-home fa-2x mb-2 d-block"></i>Dashboard
+          </a>
+        </div>
+        <div class="col-sm-6 col-md-4 col-lg-3">
+          <a href="template-builder.html" class="bulk-link">
+            <i class="fas fa-file-alt fa-2x mb-2 d-block"></i>Template Builder
+          </a>
+        </div>
+        <div class="col-sm-6 col-md-4 col-lg-3">
+          <a href="audience-manager.html" class="bulk-link">
+            <i class="fas fa-users fa-2x mb-2 d-block"></i>Audience Manager
+          </a>
+        </div>
+        <div class="col-sm-6 col-md-4 col-lg-3">
+          <a href="campaign-composer.html" class="bulk-link">
+            <i class="fas fa-paper-plane fa-2x mb-2 d-block"></i>Campaign Composer
+          </a>
+        </div>
+        <div class="col-sm-6 col-md-4 col-lg-3">
+          <a href="bulk-monitor.html" class="bulk-link">
+            <i class="fas fa-chart-line fa-2x mb-2 d-block"></i>Campaign Monitor
+          </a>
+        </div>
+        <div class="col-sm-6 col-md-4 col-lg-3">
+          <a href="bulk-settings.html" class="bulk-link">
+            <i class="fas fa-cog fa-2x mb-2 d-block"></i>System Settings
+          </a>
+        </div>
+        <div class="col-sm-6 col-md-4 col-lg-3">
+          <a href="compliance-center.html" class="bulk-link">
+            <i class="fas fa-shield-alt fa-2x mb-2 d-block"></i>Compliance Center
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="text-center">
+    <i class="fab fa-whatsapp me-2"></i>&copy; <span id="year"></span> WhatsApp Automation Platform
+  </footer>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>document.getElementById('year').textContent=new Date().getFullYear()</script>
+</body>
+</html>

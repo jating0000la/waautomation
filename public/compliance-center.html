@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compliance Center - WhatsApp Bulk Messaging</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .card { border: none; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); }
+        .compliance-status {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .status-excellent { background: linear-gradient(135deg, #28a745, #20c997); color: white; }
+        .status-good { background: linear-gradient(135deg, #20c997, #17a2b8); color: white; }
+        .status-warning { background: linear-gradient(135deg, #ffc107, #fd7e14); color: white; }
+        .status-danger { background: linear-gradient(135deg, #dc3545, #e83e8c); color: white; }
+        .rule-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid #dee2e6;
+        }
+        .rule-card.active { border-left-color: #28a745; }
+        .rule-card.inactive { border-left-color: #6c757d; }
+        .rule-card.warning { border-left-color: #ffc107; }
+        .rule-card.violation { border-left-color: #dc3545; }
+        .audit-item {
+            border-bottom: 1px solid #dee2e6;
+            padding: 0.75rem 0;
+        }
+        .audit-item:last-child { border-bottom: none; }
+        .metric-card {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            background: white;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .trend-up { color: #28a745; }
+        .trend-down { color: #dc3545; }
+        .trend-stable { color: #6c757d; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="bulk-dashboard.html">
+                <i class="fas fa-shield-alt me-2"></i>
+                Compliance Center
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="bulk-dashboard.html">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3">Compliance Center</h1>
+                        <p class="text-muted">Monitor and manage WhatsApp Business compliance</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-success me-2" onclick="runComplianceCheck()">
+                            <i class="fas fa-shield-alt me-2"></i>Run Compliance Check
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="refreshData()">
+                            <i class="fas fa-sync-alt me-2"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compliance Status Overview -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div id="complianceStatus" class="compliance-status status-excellent">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            <i class="fas fa-shield-alt fa-3x"></i>
+                        </div>
+                        <div class="col-md-8">
+                            <h4 class="mb-1">Compliance Score: <span id="complianceScore">95</span>/100</h4>
+                            <p class="mb-0" id="complianceMessage">Excellent compliance - No issues detected</p>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <div class="h5 mb-0" id="lastChecked">Just now</div>
+                            <small>Last Checked</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="metric-card">
+                    <div class="metric-value text-success" id="optInRate">98.5%</div>
+                    <div class="text-muted">Opt-in Rate</div>
+                    <div class="trend-up">
+                        <i class="fas fa-arrow-up"></i> +2.1%
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="metric-card">
+                    <div class="metric-value text-info" id="responseRate">67.3%</div>
+                    <div class="text-muted">Response Rate</div>
+                    <div class="trend-up">
+                        <i class="fas fa-arrow-up"></i> +5.2%
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="metric-card">
+                    <div class="metric-value text-warning" id="blockRate">0.8%</div>
+                    <div class="text-muted">Block Rate</div>
+                    <div class="trend-down">
+                        <i class="fas fa-arrow-down"></i> -0.3%
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="metric-card">
+                    <div class="metric-value text-secondary" id="dndPercentage">12.4%</div>
+                    <div class="text-muted">DND Percentage</div>
+                    <div class="trend-stable">
+                        <i class="fas fa-minus"></i> 0%
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compliance Rules -->
+        <div class="row">
+            <div class="col-lg-8 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Compliance Rules</h5>
+                            <button class="btn btn-sm btn-outline-primary" onclick="addNewRule()">
+                                <i class="fas fa-plus me-1"></i>Add Rule
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="complianceRules">
+                            <!-- Rules will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 mb-4">
+                <!-- Audit Trail -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">Recent Audit Trail</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="auditTrail">
+                            <!-- Audit items will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Violations Alert -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                            Active Violations
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="activeViolations">
+                            <div class="text-center text-success">
+                                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                                <p class="mb-0">No violations detected</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DND Management -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Do Not Disturb (DND) Management</h5>
+                            <div>
+                                <button class="btn btn-sm btn-outline-warning me-2" onclick="importDndList()">
+                                    <i class="fas fa-upload me-1"></i>Import DND List
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" onclick="exportDndList()">
+                                    <i class="fas fa-download me-1"></i>Export DND List
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="dndSearch" placeholder="Search DND numbers...">
+                                    <button class="btn btn-outline-secondary" onclick="searchDnd()">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <input type="tel" class="form-control" id="newDndNumber" placeholder="Add number to DND">
+                                    <button class="btn btn-success" onclick="addToDnd()">
+                                        <i class="fas fa-plus me-1"></i>Add to DND
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Phone Number</th>
+                                        <th>Added Date</th>
+                                        <th>Reason</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dndList">
+                                    <!-- DND entries will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm justify-content-center" id="dndPagination">
+                                <!-- Pagination will be generated here -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Rule Modal -->
+    <div class="modal fade" id="ruleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Compliance Rule</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="ruleForm">
+                        <div class="mb-3">
+                            <label class="form-label">Rule Name</label>
+                            <input type="text" class="form-control" id="ruleName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Rule Type</label>
+                            <select class="form-select" id="ruleType" required>
+                                <option value="">Select type...</option>
+                                <option value="opt_in">Opt-in Requirement</option>
+                                <option value="content_filter">Content Filter</option>
+                                <option value="frequency_limit">Frequency Limit</option>
+                                <option value="time_restriction">Time Restriction</option>
+                                <option value="dnd_check">DND Check</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="ruleDescription" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Rule Configuration (JSON)</label>
+                            <textarea class="form-control" id="ruleConfig" rows="5" placeholder='{"parameter": "value"}'></textarea>
+                            <small class="form-text text-muted">Enter rule-specific configuration in JSON format</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Severity</label>
+                            <select class="form-select" id="ruleSeverity" required>
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="ruleEnabled" checked>
+                                <label class="form-check-label" for="ruleEnabled">
+                                    Enable this rule
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveRule()">Save Rule</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DND Import Modal -->
+    <div class="modal fade" id="dndImportModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Import DND List</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Upload CSV File</label>
+                        <input type="file" class="form-control" id="dndFileInput" accept=".csv">
+                        <small class="form-text text-muted">CSV should contain columns: phone, reason (optional)</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Or paste numbers (one per line)</label>
+                        <textarea class="form-control" id="dndTextInput" rows="5" placeholder="+1234567890&#10;+9876543210"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="processDndImport()">Import</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        let complianceData = {};
+        let dndCurrentPage = 1;
+        const dndPageSize = 10;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshData();
+        });
+
+        // Refresh all data
+        async function refreshData() {
+            await Promise.all([
+                loadComplianceStatus(),
+                loadComplianceRules(),
+                loadAuditTrail(),
+                loadDndList()
+            ]);
+        }
+
+        // Load compliance status
+        async function loadComplianceStatus() {
+            try {
+                const response = await fetch('/api/bulk/compliance/status');
+                complianceData = await response.json();
+                
+                updateComplianceOverview();
+                updateMetrics();
+                updateViolations();
+            } catch (error) {
+                console.error('Error loading compliance status:', error);
+                showComplianceError();
+            }
+        }
+
+        function updateComplianceOverview() {
+            const score = complianceData.score || 95;
+            const statusElement = document.getElementById('complianceStatus');
+            const scoreElement = document.getElementById('complianceScore');
+            const messageElement = document.getElementById('complianceMessage');
+            const lastCheckedElement = document.getElementById('lastChecked');
+
+            scoreElement.textContent = score;
+            lastCheckedElement.textContent = new Date().toLocaleTimeString();
+
+            // Update status based on score
+            statusElement.className = 'compliance-status ';
+            if (score >= 90) {
+                statusElement.className += 'status-excellent';
+                messageElement.textContent = 'Excellent compliance - No issues detected';
+            } else if (score >= 75) {
+                statusElement.className += 'status-good';
+                messageElement.textContent = 'Good compliance - Minor issues to address';
+            } else if (score >= 60) {
+                statusElement.className += 'status-warning';
+                messageElement.textContent = 'Compliance issues detected - Action required';
+            } else {
+                statusElement.className += 'status-danger';
+                messageElement.textContent = 'Critical compliance issues - Immediate action required';
+            }
+        }
+
+        function updateMetrics() {
+            const metrics = complianceData.metrics || {};
+            
+            document.getElementById('optInRate').textContent = (metrics.optInRate || 98.5).toFixed(1) + '%';
+            document.getElementById('responseRate').textContent = (metrics.responseRate || 67.3).toFixed(1) + '%';
+            document.getElementById('blockRate').textContent = (metrics.blockRate || 0.8).toFixed(1) + '%';
+            document.getElementById('dndPercentage').textContent = (metrics.dndPercentage || 12.4).toFixed(1) + '%';
+        }
+
+        function updateViolations() {
+            const violations = complianceData.violations || [];
+            const violationsElement = document.getElementById('activeViolations');
+
+            if (violations.length === 0) {
+                violationsElement.innerHTML = `
+                    <div class="text-center text-success">
+                        <i class="fas fa-check-circle fa-2x mb-2"></i>
+                        <p class="mb-0">No violations detected</p>
+                    </div>
+                `;
+            } else {
+                violationsElement.innerHTML = violations.map(violation => `
+                    <div class="alert alert-${getSeverityColor(violation.severity)} alert-sm">
+                        <strong>${violation.rule}</strong><br>
+                        <small>${violation.description}</small>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Load compliance rules
+        async function loadComplianceRules() {
+            try {
+                const response = await fetch('/api/bulk/compliance/rules');
+                const rules = await response.json();
+                
+                renderComplianceRules(rules);
+            } catch (error) {
+                console.error('Error loading compliance rules:', error);
+                document.getElementById('complianceRules').innerHTML = 
+                    '<div class="alert alert-danger">Error loading compliance rules</div>';
+            }
+        }
+
+        function renderComplianceRules(rules) {
+            const rulesContainer = document.getElementById('complianceRules');
+            
+            if (rules.length === 0) {
+                rulesContainer.innerHTML = '<div class="text-center text-muted">No compliance rules configured</div>';
+                return;
+            }
+
+            rulesContainer.innerHTML = rules.map(rule => `
+                <div class="rule-card card mb-3 ${rule.enabled ? (rule.violations > 0 ? 'violation' : 'active') : 'inactive'}">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h6 class="card-title mb-1">${rule.name}</h6>
+                                <small class="text-muted">${rule.type}</small>
+                                <p class="card-text mt-2">${rule.description}</p>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <span class="badge bg-${getSeverityColor(rule.severity)}">${rule.severity}</span>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                ${rule.violations ? `
+                                    <div class="text-danger">
+                                        <strong>${rule.violations}</strong><br>
+                                        <small>Violations</small>
+                                    </div>
+                                ` : `
+                                    <div class="text-success">
+                                        <i class="fas fa-check-circle"></i><br>
+                                        <small>Compliant</small>
+                                    </div>
+                                `}
+                            </div>
+                            <div class="col-md-2 text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-secondary" onclick="editRule(${rule.id})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-outline-${rule.enabled ? 'warning' : 'success'}" onclick="toggleRule(${rule.id})">
+                                        <i class="fas fa-${rule.enabled ? 'pause' : 'play'}"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger" onclick="deleteRule(${rule.id})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Load audit trail
+        async function loadAuditTrail() {
+            try {
+                const response = await fetch('/api/bulk/compliance/audit?limit=10');
+                const audit = await response.json();
+                
+                renderAuditTrail(audit);
+            } catch (error) {
+                console.error('Error loading audit trail:', error);
+            }
+        }
+
+        function renderAuditTrail(audit) {
+            const auditContainer = document.getElementById('auditTrail');
+            
+            if (audit.length === 0) {
+                auditContainer.innerHTML = '<div class="text-center text-muted">No recent audit activity</div>';
+                return;
+            }
+
+            auditContainer.innerHTML = audit.map(item => `
+                <div class="audit-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>${item.action}</strong>
+                            <p class="mb-1 small">${item.description}</p>
+                            <small class="text-muted">${new Date(item.timestamp).toLocaleString()}</small>
+                        </div>
+                        <span class="badge bg-${getActionColor(item.action)}">${item.severity || 'info'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Load DND list
+        async function loadDndList() {
+            try {
+                const response = await fetch(`/api/bulk/dnd?page=${dndCurrentPage}&limit=${dndPageSize}`);
+                const data = await response.json();
+                
+                renderDndList(data.dndList);
+                renderDndPagination(data.total, data.page, data.pages);
+            } catch (error) {
+                console.error('Error loading DND list:', error);
+                document.getElementById('dndList').innerHTML = 
+                    '<tr><td colspan="4" class="text-center text-danger">Error loading DND list</td></tr>';
+            }
+        }
+
+        function renderDndList(dndList) {
+            const tbody = document.getElementById('dndList');
+            
+            if (dndList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No DND entries found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = dndList.map(item => `
+                <tr>
+                    <td>${item.phoneNumber}</td>
+                    <td>${new Date(item.addedAt).toLocaleDateString()}</td>
+                    <td>${item.reason || 'User request'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeFromDnd('${item.phoneNumber}')">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderDndPagination(total, currentPage, totalPages) {
+            const pagination = document.getElementById('dndPagination');
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+            
+            // Previous button
+            paginationHTML += `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changeDndPage(${currentPage - 1})">Previous</a>
+                </li>
+            `;
+            
+            // Page numbers
+            for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+                paginationHTML += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changeDndPage(${i})">${i}</a>
+                    </li>
+                `;
+            }
+            
+            // Next button
+            paginationHTML += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changeDndPage(${currentPage + 1})">Next</a>
+                </li>
+            `;
+            
+            pagination.innerHTML = paginationHTML;
+        }
+
+        // Compliance actions
+        async function runComplianceCheck() {
+            try {
+                const response = await fetch('/api/bulk/compliance/check', { method: 'POST' });
+                if (response.ok) {
+                    showAlert('Compliance check completed', 'success');
+                    refreshData();
+                } else {
+                    showAlert('Error running compliance check', 'danger');
+                }
+            } catch (error) {
+                console.error('Error running compliance check:', error);
+                showAlert('Error running compliance check', 'danger');
+            }
+        }
+
+        // Rule management
+        function addNewRule() {
+            document.getElementById('ruleForm').reset();
+            new bootstrap.Modal(document.getElementById('ruleModal')).show();
+        }
+
+        async function saveRule() {
+            const formData = new FormData(document.getElementById('ruleForm'));
+            const ruleData = {
+                name: document.getElementById('ruleName').value,
+                type: document.getElementById('ruleType').value,
+                description: document.getElementById('ruleDescription').value,
+                config: document.getElementById('ruleConfig').value,
+                severity: document.getElementById('ruleSeverity').value,
+                enabled: document.getElementById('ruleEnabled').checked
+            };
+
+            try {
+                const response = await fetch('/api/bulk/compliance/rules', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(ruleData)
+                });
+
+                if (response.ok) {
+                    showAlert('Rule saved successfully', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('ruleModal')).hide();
+                    loadComplianceRules();
+                } else {
+                    showAlert('Error saving rule', 'danger');
+                }
+            } catch (error) {
+                console.error('Error saving rule:', error);
+                showAlert('Error saving rule', 'danger');
+            }
+        }
+
+        async function toggleRule(ruleId) {
+            try {
+                const response = await fetch(`/api/bulk/compliance/rules/${ruleId}/toggle`, { method: 'POST' });
+                if (response.ok) {
+                    showAlert('Rule status updated', 'success');
+                    loadComplianceRules();
+                }
+            } catch (error) {
+                console.error('Error toggling rule:', error);
+                showAlert('Error updating rule', 'danger');
+            }
+        }
+
+        async function deleteRule(ruleId) {
+            if (!confirm('Are you sure you want to delete this rule?')) return;
+            
+            try {
+                const response = await fetch(`/api/bulk/compliance/rules/${ruleId}`, { method: 'DELETE' });
+                if (response.ok) {
+                    showAlert('Rule deleted successfully', 'success');
+                    loadComplianceRules();
+                }
+            } catch (error) {
+                console.error('Error deleting rule:', error);
+                showAlert('Error deleting rule', 'danger');
+            }
+        }
+
+        // DND management
+        async function addToDnd() {
+            const phoneNumber = document.getElementById('newDndNumber').value.trim();
+            if (!phoneNumber) return;
+
+            try {
+                const response = await fetch('/api/bulk/dnd', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phoneNumber, reason: 'Manual addition' })
+                });
+
+                if (response.ok) {
+                    showAlert('Number added to DND list', 'success');
+                    document.getElementById('newDndNumber').value = '';
+                    loadDndList();
+                } else {
+                    showAlert('Error adding to DND list', 'danger');
+                }
+            } catch (error) {
+                console.error('Error adding to DND:', error);
+                showAlert('Error adding to DND list', 'danger');
+            }
+        }
+
+        async function removeFromDnd(phoneNumber) {
+            if (!confirm('Remove this number from DND list?')) return;
+
+            try {
+                const response = await fetch(`/api/bulk/dnd/${encodeURIComponent(phoneNumber)}`, { method: 'DELETE' });
+                if (response.ok) {
+                    showAlert('Number removed from DND list', 'success');
+                    loadDndList();
+                }
+            } catch (error) {
+                console.error('Error removing from DND:', error);
+                showAlert('Error removing from DND list', 'danger');
+            }
+        }
+
+        function importDndList() {
+            new bootstrap.Modal(document.getElementById('dndImportModal')).show();
+        }
+
+        async function processDndImport() {
+            const file = document.getElementById('dndFileInput').files[0];
+            const textInput = document.getElementById('dndTextInput').value.trim();
+
+            if (!file && !textInput) {
+                showAlert('Please provide either a file or text input', 'warning');
+                return;
+            }
+
+            try {
+                let numbers = [];
+                
+                if (file) {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    
+                    const response = await fetch('/api/bulk/dnd/import', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        showAlert(`Imported ${result.imported} numbers, ${result.skipped} skipped`, 'success');
+                    } else {
+                        showAlert('Error importing file', 'danger');
+                    }
+                } else {
+                    numbers = textInput.split('\n').filter(n => n.trim());
+                    
+                    const response = await fetch('/api/bulk/dnd/bulk', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ numbers, reason: 'Bulk import' })
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        showAlert(`Added ${result.added} numbers to DND list`, 'success');
+                    } else {
+                        showAlert('Error adding numbers', 'danger');
+                    }
+                }
+
+                bootstrap.Modal.getInstance(document.getElementById('dndImportModal')).hide();
+                loadDndList();
+            } catch (error) {
+                console.error('Error importing DND:', error);
+                showAlert('Error importing DND list', 'danger');
+            }
+        }
+
+        async function exportDndList() {
+            try {
+                const response = await fetch('/api/bulk/dnd/export');
+                const blob = await response.blob();
+                
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `dnd-list-${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+                
+                showAlert('DND list exported successfully', 'success');
+            } catch (error) {
+                console.error('Error exporting DND list:', error);
+                showAlert('Error exporting DND list', 'danger');
+            }
+        }
+
+        function searchDnd() {
+            const query = document.getElementById('dndSearch').value.trim();
+            dndCurrentPage = 1;
+            loadDndList(query);
+        }
+
+        function changeDndPage(page) {
+            if (page < 1) return;
+            dndCurrentPage = page;
+            loadDndList();
+        }
+
+        // Utility functions
+        function getSeverityColor(severity) {
+            switch(severity) {
+                case 'critical': return 'danger';
+                case 'high': return 'warning';
+                case 'medium': return 'info';
+                case 'low': return 'secondary';
+                default: return 'primary';
+            }
+        }
+
+        function getActionColor(action) {
+            if (action.includes('violation') || action.includes('block')) return 'danger';
+            if (action.includes('warning')) return 'warning';
+            if (action.includes('success') || action.includes('compliant')) return 'success';
+            return 'info';
+        }
+
+        function showAlert(message, type) {
+            const alertsContainer = document.querySelector('.container');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show mt-3`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            alertsContainer.insertBefore(alert, alertsContainer.firstChild);
+            
+            setTimeout(() => {
+                if (alert.parentNode) alert.remove();
+            }, 5000);
+        }
+
+        function showComplianceError() {
+            const statusElement = document.getElementById('complianceStatus');
+            statusElement.className = 'compliance-status status-danger';
+            statusElement.innerHTML = `
+                <div class="text-center">
+                    <i class="fas fa-exclamation-triangle fa-3x mb-2"></i>
+                    <h4>Error Loading Compliance Data</h4>
+                    <p class="mb-0">Unable to fetch compliance information</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

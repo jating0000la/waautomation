@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Statuses & Read Mark</title>
+  <style>body{font-family:Arial,sans-serif;margin:2rem;}label{display:block;margin-top:1rem;}input,textarea{width:100%;padding:0.5rem;margin-top:0.2rem;}button{margin-top:1rem;padding:0.5rem 1rem;background:#25d366;color:#fff;border:none;cursor:pointer;}a{display:inline-block;margin-top:2rem;}</style>
+</head>
+<body>
+  <h1>Statuses & Read Mark</h1>
+  <form id="readForm">
+    <label>Chat ID:<input type="text" name="chatId" required></label>
+    <button type="submit">Mark as Read</button>
+  </form>
+  <div id="result"></div>
+  <a href="index.html">&larr; Back to Main</a>
+  <script>
+    document.getElementById('readForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const chatId = this.chatId.value;
+      const res = await fetch('/read-mark', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chatId })
+      });
+      document.getElementById('result').innerText = await res.text();
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Service Methods</title>
+  <style>body{font-family:Arial,sans-serif;margin:2rem;}label{display:block;margin-top:1rem;}input,textarea{width:100%;padding:0.5rem;margin-top:0.2rem;}button{margin-top:1rem;padding:0.5rem 1rem;background:#25d366;color:#fff;border:none;cursor:pointer;}a{display:inline-block;margin-top:2rem;}</style>
+</head>
+<body>
+  <h1>Service Methods</h1>
+  <form id="contactsForm">
+    <button type="button" onclick="getContacts()">Get Contacts</button>
+  </form>
+  <form id="avatarForm">
+    <label>Contact ID:<input type="text" name="id" required></label>
+    <button type="button" onclick="getAvatar()">Get Avatar</button>
+  </form>
+  <div id="result"></div>
+  <a href="index.html">&larr; Back to Main</a>
+  <script>
+    async function getContacts() {
+      const res = await fetch('/service/contacts');
+      document.getElementById('result').innerText = await res.text();
+    }
+    async function getAvatar() {
+      const id = document.querySelector('#avatarForm [name=id]').value;
+      const res = await fetch('/service/avatar/' + encodeURIComponent(id));
+      document.getElementById('result').innerText = await res.text();
+    }
+  </script>
+</body>
+</html>

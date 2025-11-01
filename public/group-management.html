@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Group Management</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="assets/styles/app.css" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
+      min-height: 100vh;
+    }
+    
+    .group-card {
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-left: 4px solid transparent;
+      background: white;
+      margin-bottom: 8px;
+      border-radius: 0 8px 8px 0;
+    }
+    
+    .group-card:hover {
+      border-left-color: #25D366;
+      box-shadow: 0 6px 16px rgba(37, 211, 102, 0.15);
+      transform: translateX(8px);
+      background: #ffffff;
+    }
+    
+    .group-card.active {
+      border-left-color: #25D366;
+      background: linear-gradient(90deg, #e8f5e9 0%, #ffffff 100%);
+      box-shadow: 0 4px 12px rgba(37, 211, 102, 0.2);
+    }
+    
+    .participant-item {
+      padding: 16px;
+      border-bottom: 1px solid #e9ecef;
+      transition: all 0.2s ease;
+      background: white;
+    }
+    
+    .participant-item:hover {
+      background: linear-gradient(90deg, #f8f9fa 0%, #e8f5e9 100%);
+      transform: translateX(4px);
+      padding-left: 20px;
+    }
+    
+    .participant-item:last-child {
+      border-bottom: none;
+    }
+    
+    .admin-badge {
+      font-size: 0.7rem;
+      padding: 3px 10px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      border-radius: 12px;
+    }
+    
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #e8f5e9;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease;
+    }
+    
+    .profile-pic:hover {
+      transform: scale(1.1);
+      border-color: #25D366;
+    }
+    
+    .group-stats {
+      display: flex;
+      gap: 15px;
+      font-size: 0.8rem;
+      color: #6c757d;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    
+    .group-stats i {
+      color: #25D366;
+    }
+    
+    .search-box {
+      position: sticky;
+      top: 0;
+      background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+      z-index: 10;
+      padding: 15px;
+      border-bottom: 2px solid #e8f5e9;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .search-box input {
+      border-radius: 24px;
+      border: 2px solid #e9ecef;
+      padding: 10px 20px;
+      transition: all 0.3s ease;
+    }
+    
+    .search-box input:focus {
+      border-color: #25D366;
+      box-shadow: 0 0 0 4px rgba(37, 211, 102, 0.1);
+    }
+    
+    .empty-state {
+      padding: 60px 40px;
+      text-align: center;
+      color: #6c757d;
+    }
+    
+    .empty-state i {
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255,255,255,0.95);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      backdrop-filter: blur(4px);
+    }
+    
+    .card {
+      border-radius: 16px;
+      border: none;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    
+    .card-header {
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+      border-bottom: 2px solid #e8f5e9;
+      padding: 20px;
+    }
+    
+    .btn-group-sm .btn {
+      transition: all 0.2s ease;
+    }
+    
+    .btn-group-sm .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .group-description-box {
+      background: linear-gradient(135deg, #e3f2fd 0%, #e8f5e9 100%);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 16px;
+      border-left: 4px solid #25D366;
+    }
+    
+    .participant-header {
+      background: linear-gradient(90deg, #f8f9fa 0%, #ffffff 100%);
+      padding: 16px;
+      border-bottom: 2px solid #e8f5e9;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+    
+    .badge {
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+    
+    .navbar {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .btn {
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .group-name {
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    
+    .participant-name {
+      font-weight: 600;
+      color: #34495e;
+    }
+    
+    .unread-badge {
+      animation: bounce 2s infinite;
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #25D366;
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #128C7E;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);">
+    <div class="container">
+      <a class="navbar-brand" href="index.html" style="font-weight: 600; font-size: 1.3rem;">
+        <i class="fab fa-whatsapp me-2"></i>WA Automation
+      </a>
+      <span class="navbar-text text-white" style="font-size: 1.1rem;">
+        <i class="fas fa-users-cog me-2"></i>Group Management
+      </span>
+    </div>
+  </nav>
+
+  <main class="container-fluid py-4">
+    <div class="row mb-4">
+      <div class="col">
+        <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+              <div>
+                <h1 class="h3 mb-1" style="color: #2c3e50; font-weight: 700;">
+                  <i class="fas fa-users-cog text-success me-2"></i>Group Management
+                </h1>
+                <p class="text-muted mb-0" style="font-size: 0.95rem;">
+                  <i class="fas fa-info-circle me-1"></i>Manage your WhatsApp groups and participants
+                </p>
+              </div>
+              <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-outline-secondary" onclick="refreshGroups()" title="Refresh groups list">
+                  <i class="fas fa-sync-alt me-1"></i>Refresh
+                </button>
+                <a href="create-group.html" class="btn btn-success" title="Create a new group">
+                  <i class="fas fa-plus-circle me-1"></i>New Group
+                </a>
+                <a href="account.html" class="btn btn-outline-info" title="Manage WhatsApp connection">
+                  <i class="fas fa-qrcode me-1"></i>QR Code
+                </a>
+                <a href="index.html" class="btn btn-outline-primary" title="Back to home">
+                  <i class="fas fa-home me-1"></i>Home
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Groups List -->
+      <div class="col-lg-4 mb-4 mb-lg-0">
+        <div class="card h-100">
+          <div class="search-box">
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0" style="border-radius: 24px 0 0 24px;">
+                <i class="fas fa-search text-success"></i>
+              </span>
+              <input 
+                type="text" 
+                class="form-control border-start-0" 
+                id="searchGroups" 
+                placeholder="Search groups..."
+                onkeyup="filterGroups()"
+                style="border-radius: 0 24px 24px 0;"
+              />
+            </div>
+            <div class="mt-3 d-flex justify-content-between align-items-center">
+              <span class="badge bg-gradient" id="groupCount" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); font-size: 0.85rem;">
+                <i class="fas fa-layer-group me-1"></i>0 groups
+              </span>
+              <button class="btn btn-sm btn-outline-success" onclick="refreshGroups()" title="Refresh">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-body p-0" style="max-height: calc(100vh - 340px); overflow-y: auto;" id="groupsList">
+            <div class="empty-state">
+              <div class="spinner-border text-success" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-3 mb-0" style="font-weight: 500;">Loading groups...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Group Details -->
+      <div class="col-lg-8">
+        <div class="card h-100">
+          <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+              <div class="flex-grow-1">
+                <h5 class="mb-1 group-name" id="groupDetailName">
+                  <i class="fas fa-users text-success me-2"></i>Select a Group
+                </h5>
+                <small class="text-muted" id="groupDetailInfo">
+                  <i class="fas fa-info-circle me-1"></i>Choose a group from the list to view details
+                </small>
+              </div>
+              <div class="btn-group" id="groupActions" style="display: none;">
+                <button class="btn btn-sm btn-success" id="btnAddParticipant" title="Add Participant (Ctrl+A)">
+                  <i class="fas fa-user-plus me-1"></i>Add
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" id="btnExportCSV" title="Export to CSV">
+                  <i class="fas fa-download"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-info" id="btnEditGroup" title="Edit Group Info (Ctrl+E)">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-primary" id="btnRefreshGroup" title="Refresh Details (F5)">
+                  <i class="fas fa-sync-alt"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" id="btnLeaveGroup" title="Leave Group">
+                  <i class="fas fa-sign-out-alt me-1"></i>Leave
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="card-body p-0" style="max-height: calc(100vh - 340px); overflow-y: auto; position: relative;" id="participantsContainer">
+            <div class="empty-state">
+              <i class="fas fa-hand-pointer fa-3x mb-3 text-success" style="opacity: 0.6;"></i>
+              <h5 style="color: #2c3e50; font-weight: 600;">No Group Selected</h5>
+              <p class="text-muted mb-0">Click on any group from the list to view participants and details</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add Participant Modal -->
+  <div class="modal fade" id="addParticipantModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 8px 32px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: white; border-radius: 16px 16px 0 0;">
+          <h5 class="modal-title">
+            <i class="fas fa-user-plus me-2"></i>Add Participant
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="addParticipantForm">
+            <div class="mb-3">
+              <label class="form-label" style="font-weight: 600; color: #2c3e50;">
+                <i class="fas fa-phone me-1 text-success"></i>Phone Number 
+                <span class="text-danger">*</span>
+              </label>
+              <input 
+                type="text" 
+                class="form-control form-control-lg" 
+                id="participantNumber" 
+                placeholder="e.g., 15551234567"
+                required
+                style="border-radius: 12px; border: 2px solid #e9ecef;"
+              />
+              <div class="form-text mt-2">
+                <i class="fas fa-info-circle me-1"></i>
+                Enter phone number with country code (no + or spaces)
+              </div>
+              <div class="mt-2">
+                <small class="text-muted">
+                  <strong>Examples:</strong><br>
+                  • USA: 15551234567<br>
+                  • India: 919876543210<br>
+                  • UK: 447123456789
+                </small>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer" style="border-top: 2px solid #e8f5e9;">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>Cancel
+          </button>
+          <button type="button" class="btn btn-success" onclick="addParticipant()" style="min-width: 120px;">
+            <i class="fas fa-user-plus me-1"></i>Add Now
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Group Info Modal -->
+  <div class="modal fade" id="editGroupInfoModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 8px 32px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: white; border-radius: 16px 16px 0 0;">
+          <h5 class="modal-title">
+            <i class="fas fa-edit me-2"></i>Edit Group Info
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="editGroupInfoForm">
+            <div class="mb-3">
+              <label class="form-label" style="font-weight: 600; color: #2c3e50;">
+                <i class="fas fa-tag me-1 text-success"></i>Group Name
+              </label>
+              <input 
+                type="text" 
+                class="form-control form-control-lg" 
+                id="groupName" 
+                placeholder="Enter new group name"
+                style="border-radius: 12px; border: 2px solid #e9ecef;"
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label" style="font-weight: 600; color: #2c3e50;">
+                <i class="fas fa-align-left me-1 text-success"></i>Group Description
+              </label>
+              <textarea 
+                class="form-control" 
+                id="groupDescription" 
+                rows="3"
+                placeholder="Enter new group description"
+                style="border-radius: 12px; border: 2px solid #e9ecef;"
+              ></textarea>
+            </div>
+            <div class="alert alert-info mb-0">
+              <i class="fas fa-info-circle me-2"></i>
+              <small>Leave fields empty if you don't want to change them</small>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer" style="border-top: 2px solid #e8f5e9;">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>Cancel
+          </button>
+          <button type="button" class="btn btn-success" onclick="updateGroupInfo()" style="min-width: 120px;">
+            <i class="fas fa-save me-1"></i>Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let allGroups = [];
+    let currentGroupId = null;
+    let currentGroupData = null;
+
+    // Load all groups on page load
+    async function loadGroups() {
+      try {
+        console.log('Fetching groups from /groups endpoint...');
+        const response = await fetch('/groups');
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        if (response.ok && data.success) {
+          allGroups = data.groups;
+          displayGroups(allGroups);
+          document.getElementById('groupCount').textContent = `${allGroups.length} groups`;
+        } else {
+          // Check if it's a "not ready" error
+          if (response.status === 503) {
+            const container = document.getElementById('groupsList');
+            container.innerHTML = `
+              <div class="empty-state">
+                <i class="fas fa-qrcode fa-3x mb-3 text-warning"></i>
+                <h5>WhatsApp Not Connected</h5>
+                <p class="text-muted">${data.message || 'Please scan the QR code first'}</p>
+                <a href="account.html" class="btn btn-success mt-2">
+                  <i class="fas fa-qrcode me-1"></i>Scan QR Code
+                </a>
+              </div>
+            `;
+          } else {
+            showError('Failed to load groups: ' + (data.error || data.message));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading groups:', error);
+        showError('Network error: ' + error.message);
+        const container = document.getElementById('groupsList');
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-exclamation-triangle fa-3x mb-3 text-danger"></i>
+            <h5>Connection Error</h5>
+            <p class="text-muted">${error.message}</p>
+            <button class="btn btn-primary mt-2" onclick="refreshGroups()">
+              <i class="fas fa-sync-alt me-1"></i>Try Again
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    // Display groups in the list
+    function displayGroups(groups) {
+      const container = document.getElementById('groupsList');
+
+      if (groups.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-users-slash fa-4x mb-4 text-muted"></i>
+            <h5 style="color: #2c3e50; font-weight: 600;">No Groups Found</h5>
+            <p class="text-muted mb-4">You don't have any WhatsApp groups yet</p>
+            <a href="create-group.html" class="btn btn-success btn-lg shadow">
+              <i class="fas fa-plus-circle me-2"></i>Create Your First Group
+            </a>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = groups.map(group => `
+        <div class="group-card ${currentGroupId === group.id ? 'active' : ''}" data-group-id="${group.id}">
+          <div class="p-3">
+            <div class="d-flex align-items-start">
+              <div class="flex-grow-1">
+                <h6 class="mb-2 group-name">${escapeHtml(group.name)}</h6>
+                <div class="group-stats">
+                  <span title="Total members">
+                    <i class="fas fa-users"></i> ${group.participantCount}
+                  </span>
+                  ${group.unreadCount > 0 ? `
+                    <span class="badge bg-danger unread-badge" title="Unread messages">
+                      ${group.unreadCount} new
+                    </span>
+                  ` : ''}
+                  ${group.pinned ? '<i class="fas fa-thumbtack text-warning" title="Pinned"></i>' : ''}
+                  ${group.archived ? '<i class="fas fa-archive text-secondary" title="Archived"></i>' : ''}
+                </div>
+              </div>
+              <i class="fas fa-chevron-right text-success"></i>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      
+      // Add click event listeners to all group cards
+      document.querySelectorAll('.group-card').forEach(card => {
+        card.addEventListener('click', function() {
+          const groupId = this.getAttribute('data-group-id');
+          selectGroup(groupId);
+        });
+      });
+    }
+
+    // Select and load group details
+    async function selectGroup(groupId) {
+      console.log('selectGroup called with groupId:', groupId);
+      currentGroupId = groupId;
+      
+      // Update active state
+      document.querySelectorAll('.group-card').forEach(card => {
+        card.classList.remove('active');
+        if (card.getAttribute('data-group-id') === groupId) {
+          card.classList.add('active');
+        }
+      });
+
+      // Show loading
+      const container = document.getElementById('participantsContainer');
+      container.innerHTML = `
+        <div class="loading-overlay">
+          <div class="text-center">
+            <div class="spinner-border text-success mb-3" role="status" style="width: 3rem; height: 3rem;">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mb-0" style="color: #2c3e50; font-weight: 500;">
+              <i class="fas fa-sync-alt fa-spin me-2"></i>Loading participants...
+            </p>
+          </div>
+        </div>
+      `;
+
+      try {
+        console.log('Fetching group data for:', groupId);
+        const response = await fetch(`/groups/data/${groupId}`);
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        if (response.ok && data.success) {
+          currentGroupData = data.group;
+          displayGroupDetails(data.group);
+        } else {
+          showError('Failed to load group details: ' + (data.error || data.message));
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-exclamation-circle fa-3x mb-3 text-danger"></i>
+              <h5>Error Loading Group</h5>
+              <p class="text-muted">${data.error || data.message}</p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('Error loading group details:', error);
+        showError('Network error: ' + error.message);
+      }
+    }
+
+    // Display group details and participants
+    function displayGroupDetails(group) {
+      // Update header
+      document.getElementById('groupDetailName').textContent = group.name;
+      document.getElementById('groupDetailInfo').textContent = 
+        `${group.participantCount} participants • Created ${formatDate(group.createdAt)}`;
+      document.getElementById('groupActions').style.display = 'block';
+
+      // Display participants
+      const container = document.getElementById('participantsContainer');
+      
+      if (group.participants.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-user-friends fa-4x mb-4 text-muted"></i>
+            <h5 style="color: #2c3e50; font-weight: 600;">No Participants</h5>
+            <p class="text-muted mb-4">This group has no participants yet</p>
+            <button class="btn btn-success" onclick="addParticipantPrompt()">
+              <i class="fas fa-user-plus me-2"></i>Add Participant
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      // Sort: Admins first, then alphabetically
+      const sortedParticipants = [...group.participants].sort((a, b) => {
+        if (a.isAdmin !== b.isAdmin) return b.isAdmin - a.isAdmin;
+        if (a.isSuperAdmin !== b.isSuperAdmin) return b.isSuperAdmin - a.isSuperAdmin;
+        return (a.name || a.number).localeCompare(b.name || b.number);
+      });
+
+      container.innerHTML = `
+        <div class="group-description-box">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <h6 class="mb-0" style="color: #2c3e50; font-weight: 600;">
+              <i class="fas fa-info-circle text-primary me-2"></i>Group Description
+            </h6>
+            <button class="btn btn-sm btn-outline-primary" onclick="copyGroupInfo()" title="Copy Group Info">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
+          <p class="mb-2 text-muted">${group.description || 'No description available'}</p>
+          <div class="mt-3 pt-3 border-top">
+            <div class="row g-2 text-center">
+              <div class="col-4">
+                <div class="p-2 bg-white rounded">
+                  <i class="fas fa-users text-success d-block mb-1"></i>
+                  <strong class="d-block">${group.participantCount}</strong>
+                  <small class="text-muted">Members</small>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="p-2 bg-white rounded">
+                  <i class="fas fa-shield-alt text-warning d-block mb-1"></i>
+                  <strong class="d-block">${sortedParticipants.filter(p => p.isAdmin).length}</strong>
+                  <small class="text-muted">Admins</small>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="p-2 bg-white rounded">
+                  <i class="fas fa-calendar text-info d-block mb-1"></i>
+                  <strong class="d-block">${formatDate(group.createdAt)}</strong>
+                  <small class="text-muted">Created</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="participant-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0" style="color: #2c3e50; font-weight: 600;">
+              <i class="fas fa-users text-success me-2"></i>Participants (${group.participantCount})
+            </h6>
+            <div class="text-muted small">
+              <i class="fas fa-shield-alt text-warning me-1"></i>
+              ${sortedParticipants.filter(p => p.isAdmin).length} admins
+            </div>
+          </div>
+        </div>
+        ${sortedParticipants.map(participant => `
+          <div class="participant-item">
+            <div class="d-flex align-items-center gap-3">
+              <img 
+                src="${participant.profilePicUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(participant.name || participant.number) + '&background=25D366&color=fff&bold=true'}" 
+                class="profile-pic"
+                onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(participant.name || participant.number)}&background=25D366&color=fff&bold=true'"
+                title="${escapeHtml(participant.name || participant.number)}"
+              />
+              <div class="flex-grow-1">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <strong class="participant-name">${escapeHtml(participant.name || participant.number)}</strong>
+                  ${participant.isSuperAdmin ? '<span class="badge bg-danger admin-badge"><i class="fas fa-crown me-1"></i>Owner</span>' : ''}
+                  ${participant.isAdmin && !participant.isSuperAdmin ? '<span class="badge bg-warning text-dark admin-badge"><i class="fas fa-shield-alt me-1"></i>Admin</span>' : ''}
+                  ${participant.isMyContact ? '<i class="fas fa-address-book text-primary" title="In Your Contacts"></i>' : ''}
+                </div>
+                <small class="text-muted">
+                  <i class="fas fa-phone text-success me-1"></i>+${participant.number}
+                </small>
+              </div>
+              <div class="btn-group btn-group-sm">
+                <button 
+                  class="btn btn-outline-primary btn-send-message" 
+                  data-participant-number="${participant.number}"
+                  title="Send Message"
+                >
+                  <i class="fas fa-paper-plane"></i>
+                </button>
+                ${!participant.isSuperAdmin ? `
+                  ${!participant.isAdmin ? `
+                    <button 
+                      class="btn btn-outline-success btn-promote-admin" 
+                      data-participant-id="${participant.id}"
+                      title="Promote to Admin"
+                    >
+                      <i class="fas fa-user-shield"></i>
+                    </button>
+                  ` : `
+                    <button 
+                      class="btn btn-outline-warning btn-demote-admin" 
+                      data-participant-id="${participant.id}"
+                      title="Demote from Admin"
+                    >
+                      <i class="fas fa-user-minus"></i>
+                    </button>
+                  `}
+                  <button 
+                    class="btn btn-outline-danger btn-remove-participant" 
+                    data-participant-id="${participant.id}"
+                    title="Remove from Group"
+                  >
+                    <i class="fas fa-user-times"></i>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      `;
+
+      // Attach event listeners to participant action buttons
+      document.querySelectorAll('.btn-send-message').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const number = this.getAttribute('data-participant-number');
+          sendMessageToParticipant(number);
+        });
+      });
+
+      document.querySelectorAll('.btn-promote-admin').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const participantId = this.getAttribute('data-participant-id');
+          promoteToAdmin(participantId);
+        });
+      });
+
+      document.querySelectorAll('.btn-demote-admin').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const participantId = this.getAttribute('data-participant-id');
+          demoteFromAdmin(participantId);
+        });
+      });
+
+      document.querySelectorAll('.btn-remove-participant').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const participantId = this.getAttribute('data-participant-id');
+          removeParticipant(participantId);
+        });
+      });
+    }
+
+    // Filter groups by search
+    function filterGroups() {
+      const search = document.getElementById('searchGroups').value.toLowerCase();
+      const filtered = allGroups.filter(group => 
+        group.name.toLowerCase().includes(search) ||
+        (group.participantCount && group.participantCount.toString().includes(search))
+      );
+      displayGroups(filtered);
+      document.getElementById('groupCount').textContent = 
+        `${filtered.length} of ${allGroups.length} groups`;
+    }
+
+    // Copy group info to clipboard
+    async function copyGroupInfo() {
+      if (!currentGroupData) {
+        showError('No group selected');
+        return;
+      }
+
+      const groupInfo = `Group Name: ${currentGroupData.name}
+Description: ${currentGroupData.description || 'No description'}
+Participants: ${currentGroupData.participantCount}
+Admins: ${currentGroupData.participants.filter(p => p.isAdmin).length}
+Created: ${formatDate(currentGroupData.createdAt)}
+Group ID: ${currentGroupId}`;
+
+      try {
+        await navigator.clipboard.writeText(groupInfo);
+        showSuccess('✅ Group info copied to clipboard!');
+      } catch (error) {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = groupInfo;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showSuccess('✅ Group info copied to clipboard!');
+      }
+    }
+
+    // Add participant modal
+    function addParticipantPrompt() {
+      if (!currentGroupId) {
+        alert('Please select a group first');
+        return;
+      }
+      const modal = new bootstrap.Modal(document.getElementById('addParticipantModal'));
+      modal.show();
+    }
+
+    // Edit group info modal
+    function editGroupInfoPrompt() {
+      if (!currentGroupId || !currentGroupData) {
+        showError('Please select a group first');
+        return;
+      }
+      
+      // Pre-fill current values
+      document.getElementById('groupName').value = currentGroupData.name || '';
+      document.getElementById('groupDescription').value = currentGroupData.description || '';
+      
+      const modal = new bootstrap.Modal(document.getElementById('editGroupInfoModal'));
+      modal.show();
+    }
+
+    // Update group info
+    async function updateGroupInfo() {
+      const name = document.getElementById('groupName').value.trim();
+      const description = document.getElementById('groupDescription').value.trim();
+      
+      if (!name && !description) {
+        showError('Please enter at least one field to update');
+        return;
+      }
+
+      if (!currentGroupId) {
+        showError('Please select a group first');
+        return;
+      }
+
+      try {
+        let updated = false;
+        
+        // Update name if provided
+        if (name && name !== currentGroupData.name) {
+          const response = await fetch('/groups/update-name', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              groupId: currentGroupId,
+              name: name
+            })
+          });
+
+          const data = await response.json();
+          if (response.ok && data.success) {
+            updated = true;
+          } else {
+            showError('Failed to update group name: ' + (data.error || data.message));
+            return;
+          }
+        }
+
+        if (updated) {
+          showSuccess('✅ Group info updated successfully!');
+          bootstrap.Modal.getInstance(document.getElementById('editGroupInfoModal')).hide();
+          document.getElementById('groupName').value = '';
+          document.getElementById('groupDescription').value = '';
+          // Reload group details
+          await selectGroup(currentGroupId);
+        } else {
+          showError('No changes were made');
+        }
+      } catch (error) {
+        showError('Network error: ' + error.message);
+      }
+    }
+
+    // Add participant
+    async function addParticipant() {
+      const number = document.getElementById('participantNumber').value.trim();
+      
+      if (!number) {
+        alert('Please enter a phone number');
+        return;
+      }
+
+      if (!currentGroupId) {
+        alert('Please select a group first');
+        return;
+      }
+
+      try {
+        const response = await fetch('/groups/add-participant', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            groupId: currentGroupId,
+            participant: number
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showSuccess('✅ Participant added successfully!');
+          bootstrap.Modal.getInstance(document.getElementById('addParticipantModal')).hide();
+          document.getElementById('participantNumber').value = '';
+          // Reload group details
+          await selectGroup(currentGroupId);
+        } else {
+          showError('Failed to add participant: ' + (data.error || data.message));
+        }
+      } catch (error) {
+        showError('Network error: ' + error.message);
+      }
+    }
+
+    // Remove participant
+    async function removeParticipant(participantId) {
+      if (!confirm('Are you sure you want to remove this participant?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/groups/remove-participant', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            groupId: currentGroupId,
+            participant: participantId
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showSuccess('✅ Participant removed successfully!');
+          // Reload group details
+          await selectGroup(currentGroupId);
+        } else {
+          showError('Failed to remove participant: ' + (data.error || data.message));
+        }
+      } catch (error) {
+        showError('Network error: ' + error.message);
+      }
+    }
+
+    // Leave group
+    async function leaveGroupPrompt() {
+      if (!currentGroupId || !currentGroupData) {
+        alert('Please select a group first');
+        return;
+      }
+
+      if (!confirm(`Are you sure you want to leave "${currentGroupData.name}"?`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/groups/leave', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ groupId: currentGroupId })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showSuccess('✅ Left group successfully!');
+          currentGroupId = null;
+          currentGroupData = null;
+          await refreshGroups();
+        } else {
+          showError('Failed to leave group: ' + (data.error || data.message));
+        }
+      } catch (error) {
+        showError('Network error: ' + error.message);
+      }
+    }
+
+    // Send message to participant
+    function sendMessageToParticipant(number) {
+      window.location.href = `send-message.html?to=${number}`;
+    }
+
+    // Promote participant to admin
+    async function promoteToAdmin(participantId) {
+      if (!currentGroupId) {
+        showError('No group selected');
+        return;
+      }
+
+      if (!confirm('Are you sure you want to promote this participant to admin?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/groups/set-admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            groupId: currentGroupId,
+            participant: participantId
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showSuccess('✅ Participant promoted to admin successfully!');
+          await selectGroup(currentGroupId);
+        } else {
+          showError('Failed to promote participant: ' + (data.error || data.message));
+        }
+      } catch (error) {
+        showError('Network error: ' + error.message);
+      }
+    }
+
+    // Demote admin from admin role
+    async function demoteFromAdmin(participantId) {
+      if (!currentGroupId) {
+        showError('No group selected');
+        return;
+      }
+
+      if (!confirm('Are you sure you want to demote this admin?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/groups/remove-admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            groupId: currentGroupId,
+            participant: participantId
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showSuccess('✅ Admin demoted successfully!');
+          await selectGroup(currentGroupId);
+        } else {
+          showError('Failed to demote admin: ' + (data.error || data.message));
+        }
+      } catch (error) {
+        showError('Network error: ' + error.message);
+      }
+    }
+
+    // Refresh current group details
+    async function refreshCurrentGroup() {
+      if (!currentGroupId) {
+        showError('No group selected to refresh');
+        return;
+      }
+      await selectGroup(currentGroupId);
+      showSuccess('Group details refreshed successfully!');
+    }
+
+    // Refresh groups
+    async function refreshGroups() {
+      currentGroupId = null;
+      currentGroupData = null;
+      document.getElementById('groupActions').style.display = 'none';
+      document.getElementById('participantsContainer').innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-users fa-3x mb-3 text-muted"></i>
+          <h5>No Group Selected</h5>
+          <p class="text-muted">Select a group from the list to view participants</p>
+        </div>
+      `;
+      await loadGroups();
+    }
+
+    // Utility functions
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatDate(timestamp) {
+      if (!timestamp) return 'Unknown';
+      const date = new Date(timestamp * 1000);
+      return date.toLocaleDateString();
+    }
+
+    function showError(message) {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+      alertDiv.style.zIndex = '9999';
+      alertDiv.style.minWidth = '400px';
+      alertDiv.style.boxShadow = '0 8px 24px rgba(220, 53, 69, 0.3)';
+      alertDiv.style.borderRadius = '12px';
+      alertDiv.innerHTML = `
+        <i class="fas fa-exclamation-circle me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      document.body.appendChild(alertDiv);
+      setTimeout(() => alertDiv.remove(), 5000);
+    }
+
+    function showSuccess(message) {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+      alertDiv.style.zIndex = '9999';
+      alertDiv.style.minWidth = '400px';
+      alertDiv.style.boxShadow = '0 8px 24px rgba(25, 135, 84, 0.3)';
+      alertDiv.style.borderRadius = '12px';
+      alertDiv.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      document.body.appendChild(alertDiv);
+      setTimeout(() => alertDiv.remove(), 3000);
+    }
+
+    // Export participants to CSV
+    function exportParticipants() {
+      if (!currentGroupData || !currentGroupData.participants) {
+        showError('No group selected or no participants to export');
+        return;
+      }
+
+      const participants = currentGroupData.participants;
+      const csvContent = [
+        ['Name', 'Phone Number', 'Role', 'In Contacts'].join(','),
+        ...participants.map(p => [
+          `"${(p.name || p.number).replace(/"/g, '""')}"`,
+          p.number,
+          p.isSuperAdmin ? 'Owner' : (p.isAdmin ? 'Admin' : 'Member'),
+          p.isMyContact ? 'Yes' : 'No'
+        ].join(','))
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      const filename = `${currentGroupData.name.replace(/[^a-z0-9]/gi, '_')}_participants_${new Date().toISOString().split('T')[0]}.csv`;
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showSuccess(`✅ Exported ${participants.length} participants to ${filename}`);
+    }
+
+    // Attach event listeners to header action buttons
+    document.getElementById('btnAddParticipant')?.addEventListener('click', addParticipantPrompt);
+    document.getElementById('btnExportCSV')?.addEventListener('click', exportParticipants);
+    document.getElementById('btnEditGroup')?.addEventListener('click', editGroupInfoPrompt);
+    document.getElementById('btnRefreshGroup')?.addEventListener('click', refreshCurrentGroup);
+    document.getElementById('btnLeaveGroup')?.addEventListener('click', leaveGroupPrompt);
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      // Ctrl+A - Add participant
+      if (e.ctrlKey && e.key === 'a' && currentGroupId) {
+        e.preventDefault();
+        addParticipantPrompt();
+      }
+      // Ctrl+E - Edit group info
+      if (e.ctrlKey && e.key === 'e' && currentGroupId) {
+        e.preventDefault();
+        editGroupInfoPrompt();
+      }
+      // Ctrl+R or F5 - Refresh
+      if ((e.ctrlKey && e.key === 'r') || e.key === 'F5') {
+        if (currentGroupId) {
+          e.preventDefault();
+          refreshCurrentGroup();
+        }
+      }
+      // Escape - Close modals
+      if (e.key === 'Escape') {
+        const modals = document.querySelectorAll('.modal.show');
+        modals.forEach(modal => {
+          bootstrap.Modal.getInstance(modal)?.hide();
+        });
+      }
+    });
+
+    // Initialize
+    loadGroups();
+  </script>
+</body>
+</html>
