@@ -65,7 +65,7 @@
                         <p class="text-muted">Real-time monitoring and analytics for your campaigns</p>
                     </div>
                     <div>
-                        <button class="btn btn-success me-2" onclick="refreshData()">
+                        <button class="btn btn-success me-2" id="refreshBtn">
                             <i class="fas fa-sync-alt me-2"></i>Refresh
                         </button>
                         <span class="badge bg-secondary" id="lastUpdated">Never</span>
@@ -819,6 +819,12 @@
 
         // Event listeners
         document.getElementById('statusFilter').addEventListener('change', loadCampaigns);
+        
+        // Refresh button (CSP-compliant)
+        document.getElementById('refreshBtn').addEventListener('click', function() {
+            console.log('✅ Refresh button clicked');
+            refreshData();
+        });
 
         // Initial load
         refreshData();

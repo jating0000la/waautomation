@@ -75,10 +75,10 @@
                         <p class="text-muted">Monitor and manage WhatsApp Business compliance</p>
                     </div>
                     <div>
-                        <button class="btn btn-success me-2" onclick="runComplianceCheck()">
+                        <button class="btn btn-success me-2" id="runComplianceCheckBtn">
                             <i class="fas fa-shield-alt me-2"></i>Run Compliance Check
                         </button>
-                        <button class="btn btn-outline-primary" onclick="refreshData()">
+                        <button class="btn btn-outline-primary" id="refreshDataBtn">
                             <i class="fas fa-sync-alt me-2"></i>Refresh
                         </button>
                     </div>
@@ -154,7 +154,7 @@
                     <div class="card-header">
                         <div class="d-flex justify-content-between align-items-center">
                             <h5 class="card-title mb-0">Compliance Rules</h5>
-                            <button class="btn btn-sm btn-outline-primary" onclick="addNewRule()">
+                            <button class="btn btn-sm btn-outline-primary" id="addNewRuleBtn">
                                 <i class="fas fa-plus me-1"></i>Add Rule
                             </button>
                         </div>
@@ -208,10 +208,10 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <h5 class="card-title mb-0">Do Not Disturb (DND) Management</h5>
                             <div>
-                                <button class="btn btn-sm btn-outline-warning me-2" onclick="importDndList()">
+                                <button class="btn btn-sm btn-outline-warning me-2" id="importDndListBtn">
                                     <i class="fas fa-upload me-1"></i>Import DND List
                                 </button>
-                                <button class="btn btn-sm btn-outline-info" onclick="exportDndList()">
+                                <button class="btn btn-sm btn-outline-info" id="exportDndListBtn">
                                     <i class="fas fa-download me-1"></i>Export DND List
                                 </button>
                             </div>
@@ -222,7 +222,7 @@
                             <div class="col-md-6">
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="dndSearch" placeholder="Search DND numbers...">
-                                    <button class="btn btn-outline-secondary" onclick="searchDnd()">
+                                    <button class="btn btn-outline-secondary" id="searchDndBtn">
                                         <i class="fas fa-search"></i>
                                     </button>
                                 </div>
@@ -230,7 +230,7 @@
                             <div class="col-md-6">
                                 <div class="input-group">
                                     <input type="tel" class="form-control" id="newDndNumber" placeholder="Add number to DND">
-                                    <button class="btn btn-success" onclick="addToDnd()">
+                                    <button class="btn btn-success" id="addToDndBtn">
                                         <i class="fas fa-plus me-1"></i>Add to DND
                                     </button>
                                 </div>
@@ -317,7 +317,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="saveRule()">Save Rule</button>
+                    <button type="button" class="btn btn-primary" id="saveRuleBtn">Save Rule</button>
                 </div>
             </div>
         </div>
@@ -344,7 +344,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="processDndImport()">Import</button>
+                    <button type="button" class="btn btn-primary" id="processDndImportBtn">Import</button>
                 </div>
             </div>
         </div>
@@ -494,13 +494,13 @@
                             </div>
                             <div class="col-md-2 text-end">
                                 <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-secondary" onclick="editRule(${rule.id})">
+                                    <button class="btn btn-outline-secondary edit-rule-btn" data-rule-id="${rule.id}">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button class="btn btn-outline-${rule.enabled ? 'warning' : 'success'}" onclick="toggleRule(${rule.id})">
+                                    <button class="btn btn-outline-${rule.enabled ? 'warning' : 'success'} toggle-rule-btn" data-rule-id="${rule.id}">
                                         <i class="fas fa-${rule.enabled ? 'pause' : 'play'}"></i>
                                     </button>
-                                    <button class="btn btn-outline-danger" onclick="deleteRule(${rule.id})">
+                                    <button class="btn btn-outline-danger delete-rule-btn" data-rule-id="${rule.id}">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
@@ -574,7 +574,7 @@
                     <td>${new Date(item.addedAt).toLocaleDateString()}</td>
                     <td>${item.reason || 'User request'}</td>
                     <td>
-                        <button class="btn btn-sm btn-outline-danger" onclick="removeFromDnd('${item.phoneNumber}')">
+                        <button class="btn btn-sm btn-outline-danger remove-from-dnd-btn" data-phone="${item.phoneNumber}">
                             <i class="fas fa-trash"></i> Remove
                         </button>
                     </td>
@@ -595,7 +595,7 @@
             // Previous button
             paginationHTML += `
                 <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-                    <a class="page-link" href="#" onclick="changeDndPage(${currentPage - 1})">Previous</a>
+                    <a class="page-link dnd-page-link" href="#" data-page="${currentPage - 1}">Previous</a>
                 </li>
             `;
             
@@ -603,7 +603,7 @@
             for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
                 paginationHTML += `
                     <li class="page-item ${i === currentPage ? 'active' : ''}">
-                        <a class="page-link" href="#" onclick="changeDndPage(${i})">${i}</a>
+                        <a class="page-link dnd-page-link" href="#" data-page="${i}">${i}</a>
                     </li>
                 `;
             }
@@ -611,7 +611,7 @@
             // Next button
             paginationHTML += `
                 <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-                    <a class="page-link" href="#" onclick="changeDndPage(${currentPage + 1})">Next</a>
+                    <a class="page-link dnd-page-link" href="#" data-page="${currentPage + 1}">Next</a>
                 </li>
             `;
             
@@ -870,6 +870,94 @@
                 </div>
             `;
         }
+
+        // Event listeners (CSP-compliant)
+        document.getElementById('runComplianceCheckBtn').addEventListener('click', function() {
+            console.log('✅ Run Compliance Check clicked');
+            runComplianceCheck();
+        });
+
+        document.getElementById('refreshDataBtn').addEventListener('click', function() {
+            console.log('✅ Refresh Data clicked');
+            refreshData();
+        });
+
+        document.getElementById('addNewRuleBtn').addEventListener('click', function() {
+            console.log('✅ Add New Rule clicked');
+            addNewRule();
+        });
+
+        document.getElementById('saveRuleBtn').addEventListener('click', function() {
+            console.log('✅ Save Rule clicked');
+            saveRule();
+        });
+
+        document.getElementById('importDndListBtn').addEventListener('click', function() {
+            console.log('✅ Import DND List clicked');
+            importDndList();
+        });
+
+        document.getElementById('exportDndListBtn').addEventListener('click', function() {
+            console.log('✅ Export DND List clicked');
+            exportDndList();
+        });
+
+        document.getElementById('searchDndBtn').addEventListener('click', function() {
+            console.log('✅ Search DND clicked');
+            searchDnd();
+        });
+
+        document.getElementById('addToDndBtn').addEventListener('click', function() {
+            console.log('✅ Add to DND clicked');
+            addToDnd();
+        });
+
+        document.getElementById('processDndImportBtn').addEventListener('click', function() {
+            console.log('✅ Process DND Import clicked');
+            processDndImport();
+        });
+
+        // Event delegation for dynamically created rule buttons
+        document.getElementById('complianceRules').addEventListener('click', function(e) {
+            const editBtn = e.target.closest('.edit-rule-btn');
+            const toggleBtn = e.target.closest('.toggle-rule-btn');
+            const deleteBtn = e.target.closest('.delete-rule-btn');
+
+            if (editBtn) {
+                const ruleId = parseInt(editBtn.dataset.ruleId);
+                console.log('✅ Edit rule clicked:', ruleId);
+                editRule(ruleId);
+            } else if (toggleBtn) {
+                const ruleId = parseInt(toggleBtn.dataset.ruleId);
+                console.log('✅ Toggle rule clicked:', ruleId);
+                toggleRule(ruleId);
+            } else if (deleteBtn) {
+                const ruleId = parseInt(deleteBtn.dataset.ruleId);
+                console.log('✅ Delete rule clicked:', ruleId);
+                deleteRule(ruleId);
+            }
+        });
+
+        // Event delegation for DND list remove buttons
+        document.getElementById('dndList').addEventListener('click', function(e) {
+            const removeBtn = e.target.closest('.remove-from-dnd-btn');
+            if (removeBtn) {
+                const phone = removeBtn.dataset.phone;
+                console.log('✅ Remove from DND clicked:', phone);
+                removeFromDnd(phone);
+            }
+        });
+
+        // Event delegation for DND pagination
+        document.getElementById('dndPagination').addEventListener('click', function(e) {
+            e.preventDefault();
+            const pageLink = e.target.closest('.dnd-page-link');
+            if (pageLink) {
+                const page = parseInt(pageLink.dataset.page);
+                console.log('✅ DND page changed:', page);
+                changeDndPage(page);
+            }
+        });
     </script>
 </body>
 </html>

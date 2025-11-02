@@ -10,11 +10,16 @@ require('dotenv').config();
 
 // Database imports
 const { sequelize, testConnection } = require('./database');
-const { Message, Contact, Group, Chat, WebhookLog } = require('./models');
+const { Message, Contact, Group, Chat, WebhookLog, ApiKey } = require('./models');
 
 // Bulk messaging imports
 const bulkRoutes = require('./bulk/routes');
 const bulkModels = require('./bulk/models');
+
+// External API imports
+const externalApiRoutes = require('./routes/externalApi');
+const apiKeysRoutes = require('./routes/apiKeys');
+const webhookService = require('./services/webhookService');
 
 // Security middleware imports
 const { securityHeaders, apiLimiter, csrfProtection } = require('./middleware/security');
@@ -39,6 +44,12 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
 // Add bulk messaging routes
 app.use('/api/bulk', bulkRoutes);
+
+// Add external API routes (for third-party integrations)
+app.use('/api/external', externalApiRoutes);
+
+// Add API key management routes (admin only)
+app.use('/api/keys', apiKeysRoutes);
 
 // WhatsApp client
 const client = new Client({
@@ -84,6 +95,10 @@ client.on('ready', async () => {
         const bulkSequelize = require('./bulk/models').sequelize;
         await bulkSequelize.sync({ alter: true });
         console.log('✅ Bulk messaging tables synchronized');
+        
+        // Initialize webhook service
+        await webhookService.initialize();
+        console.log('✅ Webhook service initialized');
     } catch (error) {
         console.error('❌ Database sync error:', error);
     }
@@ -106,6 +121,23 @@ client.on('disconnected', (reason) => {
 
 client.on('message', async msg => {
     console.log('Received message:', msg.body);
+    
+    // Trigger webhook for incoming message
+    try {
+        await webhookService.trigger('message', {
+            messageId: msg.id._serialized,
+            from: msg.from,
+            to: msg.to,
+            body: msg.body,
+            type: msg.type,
+            timestamp: new Date(msg.timestamp * 1000).toISOString(),
+            isGroupMsg: msg.isGroupMsg,
+            fromMe: msg.fromMe,
+            hasMedia: msg.hasMedia
+        });
+    } catch (error) {
+        console.error('❌ Error triggering webhook:', error);
+    }
     
     // Check for STOP keyword to add to DND list
     if (msg.body && msg.body.trim().toUpperCase() === 'STOP' && !msg.fromMe && !msg.isGroupMsg) {

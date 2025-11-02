@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Testing Console - WhatsApp System</title>
+    <link rel="stylesheet" href="assets/styles/app.css">
+    <style>
+        .test-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 968px) {
+            .test-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .endpoint-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+        
+        .endpoint-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .method-badge {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        
+        .method-get {
+            background: #28a745;
+            color: white;
+        }
+        
+        .method-post {
+            background: #007bff;
+            color: white;
+        }
+        
+        .method-put {
+            background: #ffc107;
+            color: black;
+        }
+        
+        .method-delete {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .test-form {
+            margin: 15px 0;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .form-group textarea {
+            min-height: 80px;
+            font-size: 13px;
+        }
+        
+        .response-container {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .response-success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .response-error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        
+        .response-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .response-body {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .api-key-input {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .saved-indicator {
+            color: #28a745;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        
+        .test-btn {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .test-btn:hover {
+            background: #0056b3;
+        }
+        
+        .test-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            opacity: 0.6;
+        }
+        
+        .permission-required {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .copy-btn {
+            padding: 4px 8px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .copy-btn:hover {
+            background: #5a6268;
+        }
+        
+        .endpoint-description {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 API Testing Console</h1>
+            <a href="api-keys.html" class="back-button">← Back to API Keys</a>
+        </div>
+
+        <!-- API Key Input -->
+        <div class="api-key-input">
+            <h3>🔑 Enter Your API Key</h3>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input 
+                    type="text" 
+                    id="apiKeyInput" 
+                    placeholder="wa_your_api_key_here" 
+                    style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;"
+                >
+                <button onclick="saveApiKey()" class="btn-primary">Save Key</button>
+                <button onclick="clearApiKey()" class="btn-secondary">Clear</button>
+            </div>
+            <span id="savedIndicator" class="saved-indicator" style="display: none;">✓ API Key Saved</span>
+            <div style="margin-top: 10px; font-size: 13px; color: #666;">
+                💡 Your API key is stored locally in your browser and never sent to any external server except the API endpoints you test.
+            </div>
+        </div>
+
+        <div class="test-container">
+            <!-- Status Endpoint -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="method-badge method-get">GET</span>
+                        <strong style="margin-left: 10px;">/api/external/status</strong>
+                    </div>
+                </div>
+                <div class="endpoint-description">Check WhatsApp connection status</div>
+                <div class="permission-required">Permission: None required</div>
+                <button class="test-btn" onclick="testStatus()">Test Status</button>
+                <div id="response-status"></div>
+            </div>
+
+            <!-- Send Message -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="method-badge method-post">POST</span>
+                        <strong style="margin-left: 10px;">/api/external/send-message</strong>
+                    </div>
+                </div>
+                <div class="endpoint-description">Send a text message</div>
+                <div class="permission-required">Permission: sendMessage</div>
+                <div class="test-form">
+                    <div class="form-group">
+                        <label>To (Phone Number with country code):</label>
+                        <input type="text" id="sendMsg_to" placeholder="919876543210">
+                    </div>
+                    <div class="form-group">
+                        <label>Message:</label>
+                        <textarea id="sendMsg_message" placeholder="Hello from API!"></textarea>
+                    </div>
+                    <button class="test-btn" onclick="testSendMessage()">Send Message</button>
+                </div>
+                <div id="response-sendMessage"></div>
+            </div>
+
+            <!-- Send Media -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="method-badge method-post">POST</span>
+                        <strong style="margin-left: 10px;">/api/external/send-media</strong>
+                    </div>
+                </div>
+                <div class="endpoint-description">Send media files (image, video, document)</div>
+                <div class="permission-required">Permission: sendMedia</div>
+                <div class="test-form">
+                    <div class="form-group">
+                        <label>To (Phone Number):</label>
+                        <input type="text" id="sendMedia_to" placeholder="919876543210">
+                    </div>
+                    <div class="form-group">
+                        <label>Media URL:</label>
+                        <input type="text" id="sendMedia_url" placeholder="https://example.com/image.jpg">
+                    </div>
+                    <div class="form-group">
+                        <label>Caption (optional):</label>
+                        <input type="text" id="sendMedia_caption" placeholder="Check this out!">
+                    </div>
+                    <button class="test-btn" onclick="testSendMedia()">Send Media</button>
+                </div>
+                <div id="response-sendMedia"></div>
+            </div>
+
+            <!-- Send Location -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="method-badge method-post">POST</span>
+                        <strong style="margin-left: 10px;">/api/external/send-location</strong>
+                    </div>
+                </div>
+                <div class="endpoint-description">Send GPS location coordinates</div>
+                <div class="permission-required">Permission: sendLocation</div>
+                <div class="test-form">
+                    <div class="form-group">
+                        <label>To (Phone Number):</label>
+                        <input type="text" id="sendLoc_to" placeholder="919876543210">
+                    </div>
+                    <div class="form-group">
+                        <label>Latitude:</label>
+                        <input type="number" step="any" id="sendLoc_lat" placeholder="37.7749">
+                    </div>
+                    <div class="form-group">
+                        <label>Longitude:</label>
+                        <input type="number" step="any" id="sendLoc_lng" placeholder="-122.4194">
+                    </div>
+                    <div class="form-group">
+                        <label>Description (optional):</label>
+                        <input type="text" id="sendLoc_desc" placeholder="San Francisco, CA">
+                    </div>
+                    <button class="test-btn" onclick="testSendLocation()">Send Location</button>
+                </div>
+                <div id="response-sendLocation"></div>
+            </div>
+
+            <!-- Send Contact -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="method-badge method-post">POST</span>
+                        <strong style="margin-left: 10px;">/api/external/send-contact</strong>
+                    </div>
+                </div>
+                <div class="endpoint-description">Send a contact card</div>
+                <div class="permission-required">Permission: sendContact</div>
+                <div class="test-form">
+                    <div class="form-group">
+                        <label>To (Phone Number):</label>
+                        <input type="text" id="sendContact_to" placeholder="919876543210">
+                    </div>
+                    <div class="form-group">
+                        <label>Contact First Name:</label>
+                        <input type="text" id="sendContact_firstName" placeholder="John">
+                    </div>
+                    <div class="form-group">
+                        <label>Contact Last Name:</label>
+                        <input type="text" id="sendContact_lastName" placeholder="Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Contact Phone Number:</label>
+                        <input type="text" id="sendContact_number" placeholder="919999999999">
+                    </div>
+                    <button class="test-btn" onclick="testSendContact()">Send Contact</button>
+                </div>
+                <div id="response-sendContact"></div>
+            </div>
+
+            <!-- Send Reaction -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="method-badge method-post">POST</span>
+                        <strong style="margin-left: 10px;">/api/external/send-reaction</strong>
+                    </div>
+                </div>
+                <div class="endpoint-description">React to a message with emoji</div>
+                <div class="permission-required">Permission: sendReaction</div>
+                <div class="test-form">
+                    <div class="form-group">
+                        <label>Message ID:</label>
+                        <input type="text" id="sendReaction_msgId" placeholder="true_919876543210@c.us_ABC123">
+                    </div>
+                    <div class="form-group">
+                        <label>Reaction (emoji):</label>
+                        <input type="text" id="sendReaction_emoji" placeholder="❤️" maxlength="2">
+                    </div>
+                    <button class="test-btn" onclick="testSendReaction()">Send Reaction</button>
+                </div>
+                <div id="response-sendReaction"></div>
+            </div>
+
+            <!-- Get Chats -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="method-badge method-get">GET</span>
+                        <strong style="margin-left: 10px;">/api/external/chats</strong>
+                    </div>
+                </div>
+                <div class="endpoint-description">Retrieve all chats</div>
+                <div class="permission-required">Permission: readMessages</div>
+                <button class="test-btn" onclick="testGetChats()">Get Chats</button>
+                <div id="response-chats"></div>
+            </div>
+
+            <!-- Get Contacts -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="method-badge method-get">GET</span>
+                        <strong style="margin-left: 10px;">/api/external/contacts</strong>
+                    </div>
+                </div>
+                <div class="endpoint-description">Retrieve all contacts</div>
+                <div class="permission-required">Permission: readMessages</div>
+                <button class="test-btn" onclick="testGetContacts()">Get Contacts</button>
+                <div id="response-contacts"></div>
+            </div>
+
+            <!-- Get Groups -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="method-badge method-get">GET</span>
+                        <strong style="margin-left: 10px;">/api/external/groups</strong>
+                    </div>
+                </div>
+                <div class="endpoint-description">Retrieve all groups</div>
+                <div class="permission-required">Permission: readMessages</div>
+                <button class="test-btn" onclick="testGetGroups()">Get Groups</button>
+                <div id="response-groups"></div>
+            </div>
+
+            <!-- Create Group -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="method-badge method-post">POST</span>
+                        <strong style="margin-left: 10px;">/api/external/create-group</strong>
+                    </div>
+                </div>
+                <div class="endpoint-description">Create a new WhatsApp group</div>
+                <div class="permission-required">Permission: createGroup</div>
+                <div class="test-form">
+                    <div class="form-group">
+                        <label>Group Name:</label>
+                        <input type="text" id="createGroup_name" placeholder="My Test Group">
+                    </div>
+                    <div class="form-group">
+                        <label>Participants (comma-separated phone numbers):</label>
+                        <input type="text" id="createGroup_participants" placeholder="919876543210,919876543211">
+                    </div>
+                    <button class="test-btn" onclick="testCreateGroup()">Create Group</button>
+                </div>
+                <div id="response-createGroup"></div>
+            </div>
+
+            <!-- Webhooks Info -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="method-badge method-post">POST</span>
+                        <strong style="margin-left: 10px;">Webhook Configuration</strong>
+                    </div>
+                </div>
+                <div class="endpoint-description">Configure webhooks for real-time events</div>
+                <div class="permission-required">Permission: webhook</div>
+                <div style="padding: 15px; background: #fff3cd; border-radius: 4px; border-left: 4px solid #ffc107; font-size: 14px;">
+                    <strong>ℹ️ Webhook Setup:</strong><br>
+                    Webhooks allow you to receive real-time notifications for WhatsApp events. Configure your webhook URL in your API key settings to receive events like:
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>message - New message received</li>
+                        <li>message_ack - Message acknowledgment status</li>
+                        <li>message_reaction - Reaction to a message</li>
+                    </ul>
+                    Webhook requests are signed with HMAC-SHA256 for security verification.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load saved API key on page load
+        window.onload = function() {
+            const savedKey = localStorage.getItem('whatsapp_api_key');
+            if (savedKey) {
+                document.getElementById('apiKeyInput').value = savedKey;
+                document.getElementById('savedIndicator').style.display = 'inline';
+            }
+        };
+
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            if (!apiKey) {
+                alert('Please enter an API key');
+                return;
+            }
+            localStorage.setItem('whatsapp_api_key', apiKey);
+            document.getElementById('savedIndicator').style.display = 'inline';
+            setTimeout(() => {
+                document.getElementById('savedIndicator').style.display = 'none';
+            }, 3000);
+        }
+
+        function clearApiKey() {
+            localStorage.removeItem('whatsapp_api_key');
+            document.getElementById('apiKeyInput').value = '';
+            document.getElementById('savedIndicator').style.display = 'none';
+        }
+
+        function getApiKey() {
+            const apiKey = localStorage.getItem('whatsapp_api_key');
+            if (!apiKey) {
+                alert('Please enter and save your API key first!');
+                return null;
+            }
+            return apiKey;
+        }
+
+        function displayResponse(containerId, response, statusCode, error = null) {
+            const container = document.getElementById(containerId);
+            const isSuccess = statusCode >= 200 && statusCode < 300;
+            
+            const responseClass = isSuccess ? 'response-success' : 'response-error';
+            const statusIcon = isSuccess ? '✓' : '✗';
+            
+            container.innerHTML = `
+                <div class="response-container ${responseClass}">
+                    <div class="response-header">
+                        <span>${statusIcon} ${isSuccess ? 'Success' : 'Error'} (Status: ${statusCode})</span>
+                        <button class="copy-btn" onclick="copyResponse('${containerId}')">📋 Copy</button>
+                    </div>
+                    <div class="response-body" id="${containerId}-body">${error || JSON.stringify(response, null, 2)}</div>
+                </div>
+            `;
+        }
+
+        function copyResponse(containerId) {
+            const responseBody = document.getElementById(containerId + '-body');
+            navigator.clipboard.writeText(responseBody.textContent).then(() => {
+                alert('Response copied to clipboard!');
+            });
+        }
+
+        async function makeRequest(url, method = 'GET', body = null) {
+            const apiKey = getApiKey();
+            if (!apiKey) return;
+
+            const options = {
+                method: method,
+                headers: {
+                    'X-API-Key': apiKey,
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json();
+                return { data, status: response.status };
+            } catch (error) {
+                return { error: error.message, status: 0 };
+            }
+        }
+
+        async function testStatus() {
+            const result = await makeRequest('/api/external/status');
+            displayResponse('response-status', result.data, result.status, result.error);
+        }
+
+        async function testSendMessage() {
+            const to = document.getElementById('sendMsg_to').value;
+            const message = document.getElementById('sendMsg_message').value;
+            
+            if (!to || !message) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const result = await makeRequest('/api/external/send-message', 'POST', { to, message });
+            displayResponse('response-sendMessage', result.data, result.status, result.error);
+        }
+
+        async function testSendMedia() {
+            const to = document.getElementById('sendMedia_to').value;
+            const media = document.getElementById('sendMedia_url').value;
+            const caption = document.getElementById('sendMedia_caption').value;
+            
+            if (!to || !media) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const body = { to, media };
+            if (caption) body.caption = caption;
+
+            const result = await makeRequest('/api/external/send-media', 'POST', body);
+            displayResponse('response-sendMedia', result.data, result.status, result.error);
+        }
+
+        async function testSendLocation() {
+            const to = document.getElementById('sendLoc_to').value;
+            const latitude = parseFloat(document.getElementById('sendLoc_lat').value);
+            const longitude = parseFloat(document.getElementById('sendLoc_lng').value);
+            const description = document.getElementById('sendLoc_desc').value;
+            
+            if (!to || isNaN(latitude) || isNaN(longitude)) {
+                alert('Please fill in all required fields with valid numbers');
+                return;
+            }
+
+            const body = { to, latitude, longitude };
+            if (description) body.description = description;
+
+            const result = await makeRequest('/api/external/send-location', 'POST', body);
+            displayResponse('response-sendLocation', result.data, result.status, result.error);
+        }
+
+        async function testSendContact() {
+            const to = document.getElementById('sendContact_to').value;
+            const firstName = document.getElementById('sendContact_firstName').value;
+            const lastName = document.getElementById('sendContact_lastName').value;
+            const number = document.getElementById('sendContact_number').value;
+            
+            if (!to || !firstName || !number) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const contact = {
+                name: { firstName, lastName },
+                number
+            };
+
+            const result = await makeRequest('/api/external/send-contact', 'POST', { to, contact });
+            displayResponse('response-sendContact', result.data, result.status, result.error);
+        }
+
+        async function testSendReaction() {
+            const messageId = document.getElementById('sendReaction_msgId').value;
+            const reaction = document.getElementById('sendReaction_emoji').value;
+            
+            if (!messageId || !reaction) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const result = await makeRequest('/api/external/send-reaction', 'POST', { messageId, reaction });
+            displayResponse('response-sendReaction', result.data, result.status, result.error);
+        }
+
+        async function testGetChats() {
+            const result = await makeRequest('/api/external/chats');
+            displayResponse('response-chats', result.data, result.status, result.error);
+        }
+
+        async function testGetContacts() {
+            const result = await makeRequest('/api/external/contacts');
+            displayResponse('response-contacts', result.data, result.status, result.error);
+        }
+
+        async function testGetGroups() {
+            const result = await makeRequest('/api/external/groups');
+            displayResponse('response-groups', result.data, result.status, result.error);
+        }
+
+        async function testCreateGroup() {
+            const name = document.getElementById('createGroup_name').value;
+            const participantsStr = document.getElementById('createGroup_participants').value;
+            
+            if (!name || !participantsStr) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const participants = participantsStr.split(',').map(p => p.trim()).filter(p => p);
+            
+            if (participants.length === 0) {
+                alert('Please enter at least one participant');
+                return;
+            }
+
+            const result = await makeRequest('/api/external/create-group', 'POST', { name, participants });
+            displayResponse('response-createGroup', result.data, result.status, result.error);
+        }
+    </script>
+</body>
+</html>

@@ -7,8 +7,9 @@ const securityHeaders = helmet({
         directives: {
             defaultSrc: ["'self'"],
             styleSrc: ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net", "cdnjs.cloudflare.com"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net"],
-            imgSrc: ["'self'", "data:", "https:"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "cdn.jsdelivr.net"],
+            scriptSrcAttr: ["'unsafe-inline'"], // Allow inline event handlers
+            imgSrc: ["'self'", "data:", "https:", "blob:"],
             connectSrc: ["'self'"],
             fontSrc: ["'self'", "cdnjs.cloudflare.com"],
             objectSrc: ["'none'"],
@@ -78,11 +79,17 @@ const statusLimiter = rateLimit({
 
 // CSRF token middleware (simple implementation)
 function csrfProtection(req, res, next) {
+    // Skip CSRF for safe methods
     if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
         return next();
     }
     
-    // For now, skip CSRF for API requests with proper headers
+    // Skip CSRF for API routes (they use API key auth)
+    if (req.path.startsWith('/api/')) {
+        return next();
+    }
+    
+    // For now, skip CSRF for all JSON requests
     // In production, implement proper CSRF token validation
     const contentType = req.headers['content-type'];
     if (contentType && contentType.includes('application/json')) {

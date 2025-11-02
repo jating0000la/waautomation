@@ -314,14 +314,14 @@
 
                     <!-- Navigation Buttons -->
                     <div class="d-flex justify-content-between mt-4">
-                        <button type="button" class="btn btn-secondary" id="prevBtn" onclick="changeStep(-1)" style="display: none;">
+                        <button type="button" class="btn btn-secondary" id="prevBtn" style="display: none;">
                             <i class="fas fa-arrow-left me-2"></i>Previous
                         </button>
                         <div class="ms-auto">
-                            <button type="button" class="btn btn-primary" id="nextBtn" onclick="changeStep(1)">
+                            <button type="button" class="btn btn-primary" id="nextBtn">
                                 Next <i class="fas fa-arrow-right ms-2"></i>
                             </button>
-                            <button type="button" class="btn btn-success" id="launchBtn" onclick="launchCampaign()" style="display: none;">
+                            <button type="button" class="btn btn-success" id="launchBtn" style="display: none;">
                                 <i class="fas fa-rocket me-2"></i>Launch Campaign
                             </button>
                         </div>
@@ -714,6 +714,22 @@
             templates = filteredTemplates;
             renderTemplateList();
             templates = originalTemplates;
+        });
+
+        // Navigation button event listeners (CSP-compliant)
+        document.getElementById('prevBtn').addEventListener('click', function() {
+            console.log('✅ Previous button clicked');
+            changeStep(-1);
+        });
+        
+        document.getElementById('nextBtn').addEventListener('click', function() {
+            console.log('✅ Next button clicked');
+            changeStep(1);
+        });
+        
+        document.getElementById('launchBtn').addEventListener('click', function() {
+            console.log('✅ Launch Campaign button clicked');
+            launchCampaign();
         });
 
         // Initialize

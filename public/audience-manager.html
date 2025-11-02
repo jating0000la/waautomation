@@ -182,7 +182,7 @@
                             <!-- CSV Upload -->
                             <div id="csvUploadSection">
                                 <h6>Upload CSV File</h6>
-                                <div class="import-zone" onclick="document.getElementById('csvFile').click()">
+                                <div class="import-zone" id="csvUploadZone">
                                     <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
                                     <p class="mb-0">Click to select CSV file or drag and drop</p>
                                     <small class="text-muted">Supported format: CSV (max 5MB)</small>
@@ -243,7 +243,7 @@ Jane Smith	+0987654321	jane@example.com"></textarea>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-success" onclick="importContacts()" id="importBtn" disabled>
+                    <button type="button" class="btn btn-success" id="importBtn" disabled>
                         <i class="fas fa-upload me-2"></i>Import Contacts
                     </button>
                 </div>
@@ -265,7 +265,7 @@ Jane Smith	+0987654321	jane@example.com"></textarea>
                             <input type="text" class="form-control" id="dndPhone" placeholder="Enter phone number">
                         </div>
                         <div class="col-md-4">
-                            <button class="btn btn-warning w-100" onclick="addToDnd()">
+                            <button class="btn btn-warning w-100" id="addToDndBtn">
                                 <i class="fas fa-ban me-2"></i>Add to DND
                             </button>
                         </div>
@@ -479,11 +479,18 @@ Jane Smith	+0987654321	jane@example.com"></textarea>
 
         // File upload handling
         document.getElementById('csvFile').addEventListener('change', function(e) {
+            console.log('📁 CSV file selected');
             const file = e.target.files[0];
             if (file) {
+                console.log('File name:', file.name, 'Size:', file.size, 'bytes');
                 const reader = new FileReader();
                 reader.onload = function(e) {
+                    console.log('File read complete, parsing CSV...');
                     parseCSVData(e.target.result);
+                };
+                reader.onerror = function(e) {
+                    console.error('Error reading file:', e);
+                    alert('Error reading file. Please try again.');
                 };
                 reader.readAsText(file);
             }
@@ -498,10 +505,19 @@ Jane Smith	+0987654321	jane@example.com"></textarea>
         });
 
         function parseCSVData(csvText) {
+            console.log('parseCSVData called with text length:', csvText.length);
             const lines = csvText.trim().split('\n');
-            if (lines.length < 2) return;
+            console.log('CSV lines found:', lines.length);
+            
+            if (lines.length < 2) {
+                console.warn('Not enough lines in CSV');
+                alert('CSV file must have at least a header row and one data row');
+                return;
+            }
 
             const headers = lines[0].split(',').map(h => sanitizeCSVValue(h.trim().replace(/"/g, '')));
+            console.log('CSV headers detected:', headers);
+            
             parsedData = lines.slice(1).map(line => {
                 const values = line.split(',').map(v => sanitizeCSVValue(v.trim().replace(/"/g, '')));
                 const row = {};
@@ -511,15 +527,30 @@ Jane Smith	+0987654321	jane@example.com"></textarea>
                 return row;
             });
 
+            console.log('CSV parsed data rows:', parsedData.length);
             updateColumnOptions(headers);
             updateDataPreview();
+            
+            // Force enable button if we have data
+            if (parsedData.length > 0) {
+                console.log('Enabling import button (CSV)');
+                document.getElementById('importBtn').disabled = false;
+            }
         }
 
         function parsePasteData(pasteText) {
+            console.log('parsePasteData called with data length:', pasteText.length);
             const lines = pasteText.trim().split('\n');
-            if (lines.length < 2) return;
+            console.log('Found lines:', lines.length);
+            
+            if (lines.length < 2) {
+                console.warn('Not enough lines in paste data');
+                return;
+            }
 
             const headers = lines[0].split('\t').map(h => sanitizeCSVValue(h.trim()));
+            console.log('Headers detected:', headers);
+            
             parsedData = lines.slice(1).map(line => {
                 const values = line.split('\t').map(v => sanitizeCSVValue(v.trim()));
                 const row = {};
@@ -529,8 +560,15 @@ Jane Smith	+0987654321	jane@example.com"></textarea>
                 return row;
             });
 
+            console.log('Parsed data rows:', parsedData.length);
             updateColumnOptions(headers);
             updateDataPreview();
+            
+            // Force enable button if we have data
+            if (parsedData.length > 0) {
+                console.log('Enabling import button');
+                document.getElementById('importBtn').disabled = false;
+            }
         }
         
         function sanitizeCSVValue(value) {
@@ -621,7 +659,13 @@ Jane Smith	+0987654321	jane@example.com"></textarea>
         }
 
         async function importContacts() {
+            console.log('🔵 Import button clicked');
+            console.log('Button disabled state:', document.getElementById('importBtn').disabled);
+            console.log('parsedData length:', parsedData.length);
+            
             const audienceId = document.getElementById('audienceId').value.trim();
+            console.log('Audience ID:', audienceId);
+            
             if (!audienceId) {
                 alert('Please enter an Audience ID');
                 return;
@@ -633,28 +677,59 @@ Jane Smith	+0987654321	jane@example.com"></textarea>
                 consentStatus: document.getElementById('consentColumn').value,
                 tags: document.getElementById('tagsColumn').value
             };
+            
+            console.log('Column mapping:', columnMapping);
 
             if (!columnMapping.phone) {
                 alert('Please select a phone number column');
                 return;
             }
+            
+            // Disable button during import
+            const importBtn = document.getElementById('importBtn');
+            const originalText = importBtn.innerHTML;
+            importBtn.disabled = true;
+            importBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Importing...';
 
             try {
                 const importMethod = document.querySelector('input[name="importMethod"]:checked').value;
                 let response;
 
                 if (importMethod === 'csv') {
+                    const fileInput = document.getElementById('csvFile');
+                    if (!fileInput.files || !fileInput.files[0]) {
+                        alert('Please select a CSV file');
+                        importBtn.disabled = false;
+                        importBtn.innerHTML = originalText;
+                        return;
+                    }
+                    
                     const formData = new FormData();
-                    formData.append('file', document.getElementById('csvFile').files[0]);
+                    formData.append('file', fileInput.files[0]);
                     formData.append('audienceId', audienceId);
                     formData.append('columnMapping', JSON.stringify(columnMapping));
 
+                    console.log('Uploading CSV file...');
                     response = await fetch('/api/bulk/audiences/import-csv', {
                         method: 'POST',
                         body: formData
                     });
                 } else {
+                    // Paste import
                     const pasteData = document.getElementById('pasteData').value;
+                    if (!pasteData || !pasteData.trim()) {
+                        alert('Please paste some data');
+                        importBtn.disabled = false;
+                        importBtn.innerHTML = originalText;
+                        return;
+                    }
+                    
+                    console.log('Sending paste data...', {
+                        audienceId,
+                        dataLength: pasteData.length,
+                        columnMapping
+                    });
+                    
                     response = await fetch('/api/bulk/audiences/import-paste', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -668,26 +743,51 @@ Jane Smith	+0987654321	jane@example.com"></textarea>
 
                 if (response.ok) {
                     const result = await response.json();
-                    let message = `Import completed!\n`;
-                    if (result.imported) message += `New contacts imported: ${result.imported}\n`;
-                    if (result.updated) message += `Existing contacts updated: ${result.updated}\n`;
-                    if (result.skipped) message += `Contacts skipped: ${result.skipped}\n`;
-                    message += `Total processed: ${result.summary.total}\n`;
-                    message += `Valid: ${result.summary.valid}\n`;
-                    message += `Invalid: ${result.summary.invalid}`;
+                    console.log('Import result:', result);
+                    
+                    let message = `✅ Import completed!\n\n`;
+                    if (result.imported !== undefined) message += `✅ New contacts imported: ${result.imported}\n`;
+                    if (result.updated !== undefined) message += `🔄 Existing contacts updated: ${result.updated}\n`;
+                    if (result.skipped !== undefined) message += `⏭️ Contacts skipped: ${result.skipped}\n`;
+                    if (result.summary) {
+                        message += `\nSummary:\n`;
+                        message += `📊 Total processed: ${result.summary.total}\n`;
+                        message += `✅ Valid: ${result.summary.valid}\n`;
+                        message += `❌ Invalid: ${result.summary.invalid}\n`;
+                        if (result.summary.dndFiltered) {
+                            message += `🚫 Filtered by DND: ${result.summary.dndFiltered}\n`;
+                        }
+                    }
                     
                     alert(message);
                     
-                    bootstrap.Modal.getInstance(document.getElementById('importModal')).hide();
+                    // Close modal
+                    const modalElement = document.getElementById('importModal');
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+                    if (modal) modal.hide();
+                    
+                    // Clear form
+                    document.getElementById('audienceId').value = '';
+                    document.getElementById('pasteData').value = '';
+                    document.getElementById('csvFile').value = '';
+                    parsedData = [];
+                    updateDataPreview();
+                    
+                    // Reload data
                     await loadContacts();
                     await loadStats();
                 } else {
                     const error = await response.json();
-                    alert('Import failed: ' + error.error);
+                    console.error('Import error response:', error);
+                    alert('❌ Import failed: ' + (error.error || 'Unknown error'));
                 }
             } catch (error) {
                 console.error('Import error:', error);
-                alert('Import failed: ' + error.message);
+                alert('❌ Import failed: ' + error.message);
+            } finally {
+                // Re-enable button
+                importBtn.disabled = false;
+                importBtn.innerHTML = originalText;
             }
         }
 
@@ -777,6 +877,24 @@ Jane Smith	+0987654321	jane@example.com"></textarea>
         // Event listeners
         document.getElementById('consentFilter').addEventListener('change', loadContacts);
         document.getElementById('searchContacts').addEventListener('input', debounce(loadContacts, 500));
+        
+        // CSV upload zone click handler (CSP-compliant)
+        document.getElementById('csvUploadZone').addEventListener('click', function() {
+            console.log('✅ CSV upload zone clicked');
+            document.getElementById('csvFile').click();
+        });
+        
+        // Import button click handler (CSP-compliant)
+        document.getElementById('importBtn').addEventListener('click', function() {
+            console.log('✅ Import button clicked via event listener');
+            importContacts();
+        });
+        
+        // Add to DND button handler (CSP-compliant)
+        document.getElementById('addToDndBtn').addEventListener('click', function() {
+            console.log('✅ Add to DND button clicked');
+            addToDnd();
+        });
 
         function debounce(func, wait) {
             let timeout;

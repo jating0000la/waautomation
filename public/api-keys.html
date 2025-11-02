@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Key Management - WhatsApp System</title>
+    <link rel="stylesheet" href="assets/styles/app.css">
+    <style>
+        .api-key-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .api-key-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .key-display {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+        .permission-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin: 2px;
+        }
+        .permission-enabled {
+            background: #d4edda;
+            color: #155724;
+        }
+        .permission-disabled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status-active {
+            color: #28a745;
+        }
+        .status-inactive {
+            color: #dc3545;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .permission-checkbox {
+            margin: 10px 0;
+        }
+        .copy-button {
+            cursor: pointer;
+            padding: 5px 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔑 API Key Management</h1>
+            <a href="index.html" class="back-button">← Back to Dashboard</a>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalKeys">0</div>
+                <div class="stat-label">Total API Keys</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="activeKeys">0</div>
+                <div class="stat-label">Active Keys</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalCalls">0</div>
+                <div class="stat-label">Total API Calls</div>
+            </div>
+        </div>
+
+        <!-- Documentation Section -->
+        <div class="api-key-card" style="margin-bottom: 20px;">
+            <h2 style="margin-top: 0;">📚 API Documentation</h2>
+            
+            <div style="margin-bottom: 20px;">
+                <h3>Quick Start</h3>
+                <p>Use your API key to authenticate requests to the WhatsApp API. Include it in the <code>X-API-Key</code> header:</p>
+                <div class="key-display">
+                    curl -X POST http://localhost:3000/api/external/send-message \<br>
+                    &nbsp;&nbsp;-H "X-API-Key: YOUR_API_KEY_HERE" \<br>
+                    &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+                    &nbsp;&nbsp;-d '{"to": "1234567890", "message": "Hello!"}'
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h3>Available Endpoints</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f5f5f5; border-bottom: 2px solid #ddd;">
+                            <th style="padding: 10px; text-align: left;">Method</th>
+                            <th style="padding: 10px; text-align: left;">Endpoint</th>
+                            <th style="padding: 10px; text-align: left;">Permission Required</th>
+                            <th style="padding: 10px; text-align: left;">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 8px;"><code>GET</code></td>
+                            <td style="padding: 8px;"><code>/api/external/status</code></td>
+                            <td style="padding: 8px;">-</td>
+                            <td style="padding: 8px;">Check WhatsApp connection status</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd; background: #f9f9f9;">
+                            <td style="padding: 8px;"><code>POST</code></td>
+                            <td style="padding: 8px;"><code>/api/external/send-message</code></td>
+                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">sendMessage</span></td>
+                            <td style="padding: 8px;">Send a text message</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 8px;"><code>POST</code></td>
+                            <td style="padding: 8px;"><code>/api/external/send-media</code></td>
+                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">sendMedia</span></td>
+                            <td style="padding: 8px;">Send media (image, video, document)</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd; background: #f9f9f9;">
+                            <td style="padding: 8px;"><code>POST</code></td>
+                            <td style="padding: 8px;"><code>/api/external/send-location</code></td>
+                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">sendLocation</span></td>
+                            <td style="padding: 8px;">Send GPS location</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 8px;"><code>POST</code></td>
+                            <td style="padding: 8px;"><code>/api/external/send-contact</code></td>
+                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">sendContact</span></td>
+                            <td style="padding: 8px;">Send a contact card</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd; background: #f9f9f9;">
+                            <td style="padding: 8px;"><code>POST</code></td>
+                            <td style="padding: 8px;"><code>/api/external/send-reaction</code></td>
+                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">sendReaction</span></td>
+                            <td style="padding: 8px;">React to a message with emoji</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 8px;"><code>GET</code></td>
+                            <td style="padding: 8px;"><code>/api/external/chats</code></td>
+                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">readMessages</span></td>
+                            <td style="padding: 8px;">Get all chats</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd; background: #f9f9f9;">
+                            <td style="padding: 8px;"><code>GET</code></td>
+                            <td style="padding: 8px;"><code>/api/external/contacts</code></td>
+                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">readMessages</span></td>
+                            <td style="padding: 8px;">Get all contacts</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 8px;"><code>GET</code></td>
+                            <td style="padding: 8px;"><code>/api/external/groups</code></td>
+                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">readMessages</span></td>
+                            <td style="padding: 8px;">Get all groups</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd; background: #f9f9f9;">
+                            <td style="padding: 8px;"><code>POST</code></td>
+                            <td style="padding: 8px;"><code>/api/external/create-group</code></td>
+                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">createGroup</span></td>
+                            <td style="padding: 8px;">Create a new WhatsApp group</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 8px;"><code>POST</code></td>
+                            <td style="padding: 8px;"><code>/api/external/groups/:id/add-participants</code></td>
+                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">manageGroups</span></td>
+                            <td style="padding: 8px;">Add participants to a group</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd; background: #f9f9f9;">
+                            <td style="padding: 8px;"><code>POST</code></td>
+                            <td style="padding: 8px;"><code>/api/external/groups/:id/remove-participant</code></td>
+                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">manageGroups</span></td>
+                            <td style="padding: 8px;">Remove a participant from group</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 8px;"><code>PUT</code></td>
+                            <td style="padding: 8px;"><code>/api/external/groups/:id</code></td>
+                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">manageGroups</span></td>
+                            <td style="padding: 8px;">Update group settings</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h3>Example: Send Message (PowerShell)</h3>
+                <div class="key-display">
+                    $body = @{<br>
+                    &nbsp;&nbsp;to = "919876543210"<br>
+                    &nbsp;&nbsp;message = "Hello from API!"<br>
+                    } | ConvertTo-Json<br><br>
+                    Invoke-WebRequest -Uri "http://localhost:3000/api/external/send-message" `<br>
+                    &nbsp;&nbsp;-Method POST `<br>
+                    &nbsp;&nbsp;-Headers @{<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;"X-API-Key" = "YOUR_API_KEY_HERE"<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;"Content-Type" = "application/json"<br>
+                    &nbsp;&nbsp;} `<br>
+                    &nbsp;&nbsp;-Body $body
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h3>Example: Send Media (Python)</h3>
+                <div class="key-display">
+                    import requests<br><br>
+                    headers = {<br>
+                    &nbsp;&nbsp;"X-API-Key": "YOUR_API_KEY_HERE",<br>
+                    &nbsp;&nbsp;"Content-Type": "application/json"<br>
+                    }<br><br>
+                    data = {<br>
+                    &nbsp;&nbsp;"to": "919876543210",<br>
+                    &nbsp;&nbsp;"media": "https://example.com/image.jpg",<br>
+                    &nbsp;&nbsp;"caption": "Check this out!"<br>
+                    }<br><br>
+                    response = requests.post(<br>
+                    &nbsp;&nbsp;"http://localhost:3000/api/external/send-media",<br>
+                    &nbsp;&nbsp;headers=headers,<br>
+                    &nbsp;&nbsp;json=data<br>
+                    )<br>
+                    print(response.json())
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h3>Example: Send Location (Node.js)</h3>
+                <div class="key-display">
+                    const axios = require('axios');<br><br>
+                    const response = await axios.post(<br>
+                    &nbsp;&nbsp;'http://localhost:3000/api/external/send-location',<br>
+                    &nbsp;&nbsp;{<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;to: '919876543210',<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;latitude: 37.7749,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;longitude: -122.4194,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;description: 'San Francisco, CA'<br>
+                    &nbsp;&nbsp;},<br>
+                    &nbsp;&nbsp;{<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;headers: {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'X-API-Key': 'YOUR_API_KEY_HERE',<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'Content-Type': 'application/json'<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                    &nbsp;&nbsp;}<br>
+                    );<br>
+                    console.log(response.data);
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h3>Response Format</h3>
+                <p>All endpoints return JSON responses with the following structure:</p>
+                <div class="key-display">
+                    <strong>Success:</strong><br>
+                    {<br>
+                    &nbsp;&nbsp;"success": true,<br>
+                    &nbsp;&nbsp;"message": "Message sent successfully",<br>
+                    &nbsp;&nbsp;"data": { ... }<br>
+                    }<br><br>
+                    <strong>Error:</strong><br>
+                    {<br>
+                    &nbsp;&nbsp;"success": false,<br>
+                    &nbsp;&nbsp;"error": "Error description",<br>
+                    &nbsp;&nbsp;"message": "Detailed error message"<br>
+                    }
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h3>Rate Limiting</h3>
+                <p>Each API key has a configurable rate limit (default: 100 requests/minute). Exceeded limits will return:</p>
+                <div class="key-display">
+                    {<br>
+                    &nbsp;&nbsp;"success": false,<br>
+                    &nbsp;&nbsp;"error": "Rate limit exceeded",<br>
+                    &nbsp;&nbsp;"message": "Too many requests"<br>
+                    }
+                </div>
+            </div>
+
+            <div>
+                <h3>📖 Additional Documentation</h3>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li><strong>API_DOCUMENTATION.md</strong> - Complete API reference with all endpoints and parameters</li>
+                    <li><strong>QUICK_START.md</strong> - Getting started guide with step-by-step instructions</li>
+                    <li><strong>EXTERNAL_API_README.md</strong> - Architecture overview and implementation details</li>
+                    <li><strong>API_TEST_RESULTS.md</strong> - Test results and real usage examples</li>
+                    <li><strong>examples/</strong> directory - Code samples in Python, Node.js, and cURL</li>
+                </ul>
+                <p style="margin-top: 10px;">
+                    <strong>Note:</strong> Replace <code>YOUR_API_KEY_HERE</code> with your actual API key and use valid phone numbers in format: country_code + number (e.g., 919876543210 for India).
+                </p>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button onclick="showCreateModal()" class="btn-primary">+ Create New API Key</button>
+            <button onclick="loadApiKeys()" class="btn-secondary">🔄 Refresh</button>
+            <a href="api-testing.html" class="btn-primary" style="text-decoration: none; display: inline-block;">🧪 Test APIs</a>
+        </div>
+
+        <div id="apiKeysList"></div>
+    </div>
+
+    <!-- Create API Key Modal -->
+    <div id="createModal" class="modal">
+        <div class="modal-content">
+            <h2>Create New API Key</h2>
+            <form id="createKeyForm">
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" id="keyName" required placeholder="e.g., Mobile App">
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="keyDescription" rows="3" placeholder="Optional description"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Rate Limit (requests per minute)</label>
+                    <input type="number" id="keyRateLimit" value="100" min="1" max="1000">
+                </div>
+
+                <div class="form-group">
+                    <label>Expires At (optional)</label>
+                    <input type="datetime-local" id="keyExpires">
+                </div>
+
+                <div class="form-group">
+                    <label>IP Whitelist (comma-separated, optional)</label>
+                    <input type="text" id="keyIpWhitelist" placeholder="e.g., 192.168.1.1, 10.0.0.1">
+                </div>
+
+                <div class="form-group">
+                    <label>Permissions</label>
+                    <div class="permission-checkbox">
+                        <input type="checkbox" id="perm_sendMessage" checked>
+                        <label for="perm_sendMessage">Send Messages</label>
+                    </div>
+                    <div class="permission-checkbox">
+                        <input type="checkbox" id="perm_sendMedia" checked>
+                        <label for="perm_sendMedia">Send Media</label>
+                    </div>
+                    <div class="permission-checkbox">
+                        <input type="checkbox" id="perm_sendLocation" checked>
+                        <label for="perm_sendLocation">Send Location</label>
+                    </div>
+                    <div class="permission-checkbox">
+                        <input type="checkbox" id="perm_sendContact" checked>
+                        <label for="perm_sendContact">Send Contact</label>
+                    </div>
+                    <div class="permission-checkbox">
+                        <input type="checkbox" id="perm_sendReaction" checked>
+                        <label for="perm_sendReaction">Send Reaction</label>
+                    </div>
+                    <div class="permission-checkbox">
+                        <input type="checkbox" id="perm_createGroup">
+                        <label for="perm_createGroup">Create Groups</label>
+                    </div>
+                    <div class="permission-checkbox">
+                        <input type="checkbox" id="perm_manageGroups">
+                        <label for="perm_manageGroups">Manage Groups</label>
+                    </div>
+                    <div class="permission-checkbox">
+                        <input type="checkbox" id="perm_readMessages">
+                        <label for="perm_readMessages">Read Messages</label>
+                    </div>
+                    <div class="permission-checkbox">
+                        <input type="checkbox" id="perm_webhook" checked>
+                        <label for="perm_webhook">Receive Webhooks</label>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Create API Key</button>
+                    <button type="button" onclick="closeCreateModal()" class="btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Key Modal -->
+    <div id="viewKeyModal" class="modal">
+        <div class="modal-content">
+            <h2>API Key Created Successfully!</h2>
+            <div class="alert alert-warning">
+                ⚠️ <strong>Important:</strong> Save this API key securely. It will not be shown again!
+            </div>
+            <div class="key-display">
+                <span id="newApiKey"></span>
+                <button class="copy-button" onclick="copyApiKey()">📋 Copy</button>
+            </div>
+            <div class="form-actions">
+                <button onclick="closeViewKeyModal()" class="btn-primary">I've Saved It</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentApiKeys = [];
+
+        async function loadApiKeys() {
+            try {
+                const response = await fetch('/api/keys');
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentApiKeys = data.keys;
+                    displayApiKeys(data.keys);
+                    updateStats(data.keys);
+                } else {
+                    // Handle error response
+                    const container = document.getElementById('apiKeysList');
+                    if (response.status === 503) {
+                        container.innerHTML = `
+                            <div class="alert alert-warning">
+                                <h4>⚠️ WhatsApp Not Connected</h4>
+                                <p>${data.message}</p>
+                                <a href="account.html" class="btn-primary" style="display:inline-block; margin-top:10px;">
+                                    Go to Account Page to Connect →
+                                </a>
+                            </div>
+                        `;
+                    } else {
+                        container.innerHTML = `<div class="alert alert-danger">Error: ${data.error || data.message}</div>`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading API keys:', error);
+                const container = document.getElementById('apiKeysList');
+                container.innerHTML = `
+                    <div class="alert alert-warning">
+                        <h4>⚠️ Connection Error</h4>
+                        <p>Unable to load API keys. Please make sure:</p>
+                        <ol>
+                            <li>WhatsApp is connected (scan QR code at <a href="account.html">account page</a>)</li>
+                            <li>The server is running</li>
+                            <li>The database is configured correctly</li>
+                        </ol>
+                        <button onclick="loadApiKeys()" class="btn-primary" style="margin-top:10px;">
+                            Try Again
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function displayApiKeys(keys) {
+            const container = document.getElementById('apiKeysList');
+            
+            if (keys.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">No API keys created yet. Click "Create New API Key" to get started.</div>';
+                return;
+            }
+
+            container.innerHTML = keys.map(key => `
+                <div class="api-key-card">
+                    <div class="api-key-header">
+                        <div>
+                            <h3>${key.name}</h3>
+                            <span class="${key.isActive ? 'status-active' : 'status-inactive'}">
+                                ${key.isActive ? '✓ Active' : '✗ Inactive'}
+                            </span>
+                        </div>
+                        <div>
+                            <button onclick="toggleKeyStatus('${key.id}', ${!key.isActive})" class="btn-secondary">
+                                ${key.isActive ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button onclick="regenerateKey('${key.id}')" class="btn-secondary">🔄 Regenerate</button>
+                            <button onclick="deleteKey('${key.id}')" class="btn-danger">🗑️ Delete</button>
+                        </div>
+                    </div>
+                    
+                    ${key.description ? `<p>${key.description}</p>` : ''}
+                    
+                    <div style="margin: 10px 0;">
+                        <strong>Usage:</strong> ${key.usageCount || 0} calls | 
+                        <strong>Rate Limit:</strong> ${key.rateLimit}/min | 
+                        <strong>Created:</strong> ${new Date(key.createdAt).toLocaleDateString()}
+                        ${key.lastUsed ? ` | <strong>Last Used:</strong> ${new Date(key.lastUsed).toLocaleString()}` : ''}
+                    </div>
+                    
+                    ${key.expiresAt ? `<div><strong>Expires:</strong> ${new Date(key.expiresAt).toLocaleString()}</div>` : ''}
+                    
+                    <div style="margin-top: 10px;">
+                        <strong>Permissions:</strong><br>
+                        ${Object.entries(key.permissions).map(([perm, enabled]) => 
+                            `<span class="permission-badge ${enabled ? 'permission-enabled' : 'permission-disabled'}">${perm}</span>`
+                        ).join('')}
+                    </div>
+                    
+                    ${key.ipWhitelist && key.ipWhitelist.length > 0 ? 
+                        `<div style="margin-top: 10px;"><strong>IP Whitelist:</strong> ${key.ipWhitelist.join(', ')}</div>` 
+                        : ''}
+                </div>
+            `).join('');
+        }
+
+        function updateStats(keys) {
+            document.getElementById('totalKeys').textContent = keys.length;
+            document.getElementById('activeKeys').textContent = keys.filter(k => k.isActive).length;
+            document.getElementById('totalCalls').textContent = keys.reduce((sum, k) => sum + (k.usageCount || 0), 0);
+        }
+
+        function showCreateModal() {
+            document.getElementById('createModal').style.display = 'block';
+        }
+
+        function closeCreateModal() {
+            document.getElementById('createModal').style.display = 'none';
+            document.getElementById('createKeyForm').reset();
+        }
+
+        function closeViewKeyModal() {
+            document.getElementById('viewKeyModal').style.display = 'none';
+            loadApiKeys();
+        }
+
+        document.getElementById('createKeyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const permissions = {};
+            ['sendMessage', 'sendMedia', 'sendLocation', 'sendContact', 'sendReaction', 
+             'createGroup', 'manageGroups', 'readMessages', 'webhook'].forEach(perm => {
+                permissions[perm] = document.getElementById(`perm_${perm}`).checked;
+            });
+
+            const ipWhitelist = document.getElementById('keyIpWhitelist').value
+                .split(',')
+                .map(ip => ip.trim())
+                .filter(ip => ip.length > 0);
+
+            const data = {
+                name: document.getElementById('keyName').value,
+                description: document.getElementById('keyDescription').value,
+                rateLimit: parseInt(document.getElementById('keyRateLimit').value),
+                expiresAt: document.getElementById('keyExpires').value || null,
+                ipWhitelist: ipWhitelist,
+                permissions: permissions
+            };
+
+            try {
+                const response = await fetch('/api/keys', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    closeCreateModal();
+                    document.getElementById('newApiKey').textContent = result.apiKey.key;
+                    document.getElementById('viewKeyModal').style.display = 'block';
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error creating API key:', error);
+                alert('Failed to create API key');
+            }
+        });
+
+        function copyApiKey() {
+            const text = document.getElementById('newApiKey').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('API key copied to clipboard!');
+            });
+        }
+
+        async function toggleKeyStatus(id, isActive) {
+            try {
+                const response = await fetch(`/api/keys/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ isActive })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    loadApiKeys();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error updating API key:', error);
+                alert('Failed to update API key');
+            }
+        }
+
+        async function regenerateKey(id) {
+            if (!confirm('Are you sure you want to regenerate this API key? The old key will stop working immediately.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/keys/${id}/regenerate`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('newApiKey').textContent = result.apiKey.key;
+                    document.getElementById('viewKeyModal').style.display = 'block';
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error regenerating API key:', error);
+                alert('Failed to regenerate API key');
+            }
+        }
+
+        async function deleteKey(id) {
+            if (!confirm('Are you sure you want to delete this API key? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/keys/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    loadApiKeys();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error deleting API key:', error);
+                alert('Failed to delete API key');
+            }
+        }
+
+        // Load API keys on page load
+        loadApiKeys();
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -63,7 +63,7 @@
                         <p class="text-muted">Configure system-wide settings for bulk messaging</p>
                     </div>
                     <div>
-                        <button class="btn btn-success" onclick="saveAllSettings()">
+                        <button class="btn btn-success" id="saveAllSettingsBtn">
                             <i class="fas fa-save me-2"></i>Save All Settings
                         </button>
                     </div>
@@ -410,20 +410,20 @@
                     </div>
                     <div class="card-body">
                         <div class="d-grid gap-2">
-                            <button class="btn btn-outline-primary" onclick="resetToDefaults()">
+                            <button class="btn btn-outline-primary" id="resetToDefaultsBtn">
                                 <i class="fas fa-undo me-2"></i>Reset to Defaults
                             </button>
-                            <button class="btn btn-outline-success" onclick="testWebhook()">
+                            <button class="btn btn-outline-success" id="testWebhookBtn">
                                 <i class="fas fa-test-tube me-2"></i>Test Webhook
                             </button>
-                            <button class="btn btn-outline-warning" onclick="pauseAllCampaigns()">
+                            <button class="btn btn-outline-warning" id="pauseAllCampaignsBtn">
                                 <i class="fas fa-pause me-2"></i>Pause All Campaigns
                             </button>
-                            <button class="btn btn-outline-info" onclick="exportSettings()">
+                            <button class="btn btn-outline-info" id="exportSettingsBtn">
                                 <i class="fas fa-download me-2"></i>Export Settings
                             </button>
-                            <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importSettings(event)">
-                            <button class="btn btn-outline-secondary" onclick="document.getElementById('importFile').click()">
+                            <input type="file" id="importFile" accept=".json" style="display: none;">
+                            <button class="btn btn-outline-secondary" id="importSettingsBtn">
                                 <i class="fas fa-upload me-2"></i>Import Settings
                             </button>
                         </div>
@@ -841,6 +841,42 @@
                 activities[activities.length - 1].remove();
             }
         }
+
+        // Event listeners (CSP-compliant)
+        document.getElementById('saveAllSettingsBtn').addEventListener('click', function() {
+            console.log('✅ Save All Settings clicked');
+            saveAllSettings();
+        });
+
+        document.getElementById('resetToDefaultsBtn').addEventListener('click', function() {
+            console.log('✅ Reset to Defaults clicked');
+            resetToDefaults();
+        });
+
+        document.getElementById('testWebhookBtn').addEventListener('click', function() {
+            console.log('✅ Test Webhook clicked');
+            testWebhook();
+        });
+
+        document.getElementById('pauseAllCampaignsBtn').addEventListener('click', function() {
+            console.log('✅ Pause All Campaigns clicked');
+            pauseAllCampaigns();
+        });
+
+        document.getElementById('exportSettingsBtn').addEventListener('click', function() {
+            console.log('✅ Export Settings clicked');
+            exportSettings();
+        });
+
+        document.getElementById('importSettingsBtn').addEventListener('click', function() {
+            console.log('✅ Import Settings clicked');
+            document.getElementById('importFile').click();
+        });
+
+        document.getElementById('importFile').addEventListener('change', function(event) {
+            console.log('✅ Import file selected');
+            importSettings(event);
+        });
     </script>
 </body>
 </html>
