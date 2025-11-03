@@ -1,6 +1,10 @@
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
+// Get rate limit configuration from environment or use defaults
+const RATE_LIMIT_WINDOW = parseInt(process.env.RATE_LIMIT_WINDOW || '900000'); // 15 minutes
+const RATE_LIMIT_MAX = parseInt(process.env.RATE_LIMIT_MAX || '100');
+
 // Security headers middleware
 const securityHeaders = helmet({
     contentSecurityPolicy: {
@@ -21,11 +25,22 @@ const securityHeaders = helmet({
 
 // Rate limiting for API endpoints
 const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
-    message: 'Too many requests from this IP, please try again later.',
+    windowMs: RATE_LIMIT_WINDOW,
+    max: RATE_LIMIT_MAX,
+    message: {
+        error: 'Too many requests',
+        message: 'Too many requests from this IP, please try again later.',
+        retryAfter: Math.ceil(RATE_LIMIT_WINDOW / 1000)
+    },
     standardHeaders: true,
     legacyHeaders: false,
+    handler: (req, res) => {
+        res.status(429).json({
+            error: 'Too many requests',
+            message: 'Rate limit exceeded. Please try again later.',
+            retryAfter: Math.ceil(RATE_LIMIT_WINDOW / 1000)
+        });
+    }
 });
 
 // Stricter rate limiting for template creation/updates

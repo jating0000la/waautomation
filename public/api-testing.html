@@ -3,30 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Testing Console - WhatsApp System</title>
+    <title>API Testing Console - WhatsApp Multi-Account System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="assets/styles/app.css">
     <style>
-        .test-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-top: 20px;
+        body { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
+            padding: 20px;
         }
-        
-        @media (max-width: 968px) {
-            .test-container {
-                grid-template-columns: 1fr;
-            }
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.2);
         }
-        
+        .page-header {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .account-selector {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 5px solid #25D366;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+        }
         .endpoint-card {
             background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 15px;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 5px solid #25D366;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
         }
-        
+        .endpoint-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .test-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+        }
         .endpoint-header {
             display: flex;
             justify-content: space-between;
@@ -35,195 +66,621 @@
             padding-bottom: 10px;
             border-bottom: 2px solid #f0f0f0;
         }
-        
         .method-badge {
-            padding: 4px 12px;
-            border-radius: 4px;
+            padding: 6px 12px;
+            border-radius: 8px;
             font-size: 12px;
             font-weight: bold;
             display: inline-block;
         }
-        
-        .method-get {
-            background: #28a745;
-            color: white;
+        .method-get { background: #28a745; color: white; }
+        .method-post { background: #007bff; color: white; }
+        .method-put { background: #ffc107; color: black; }
+        .method-delete { background: #dc3545; color: white; }
+        .form-control, .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
         }
-        
-        .method-post {
-            background: #007bff;
-            color: white;
+        .form-control:focus, .form-select:focus {
+            border-color: #25D366;
+            box-shadow: 0 0 0 0.2rem rgba(37, 211, 102, 0.25);
         }
-        
-        .method-put {
-            background: #ffc107;
-            color: black;
+        .btn-primary {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
         }
-        
-        .method-delete {
-            background: #dc3545;
-            color: white;
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5);
         }
-        
-        .test-form {
-            margin: 15px 0;
+        .btn-secondary {
+            background: #6c757d;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-weight: 600;
         }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #333;
-        }
-        
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-family: monospace;
-        }
-        
-        .form-group textarea {
-            min-height: 80px;
-            font-size: 13px;
-        }
-        
         .response-container {
             margin-top: 15px;
-            padding: 15px;
+            padding: 20px;
             background: #f8f9fa;
-            border-radius: 4px;
+            border-radius: 10px;
             border-left: 4px solid #007bff;
         }
-        
         .response-success {
             border-left-color: #28a745;
             background: #d4edda;
         }
-        
         .response-error {
             border-left-color: #dc3545;
             background: #f8d7da;
         }
-        
-        .response-header {
-            font-weight: bold;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
         .response-body {
             background: white;
-            padding: 10px;
-            border-radius: 4px;
-            font-family: monospace;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
             font-size: 13px;
             white-space: pre-wrap;
             word-break: break-all;
             max-height: 300px;
             overflow-y: auto;
         }
-        
-        .api-key-input {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+        .alert {
+            border-radius: 10px;
+            border: none;
+            padding: 15px 20px;
         }
-        
         .saved-indicator {
             color: #28a745;
             font-size: 14px;
             margin-left: 10px;
         }
-        
-        .test-btn {
-            width: 100%;
-            padding: 10px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 500;
-        }
-        
-        .test-btn:hover {
-            background: #0056b3;
-        }
-        
-        .test-btn:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-        }
-        
-        .loading {
-            opacity: 0.6;
-        }
-        
-        .permission-required {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-        }
-        
-        .copy-btn {
-            padding: 4px 8px;
-            background: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        
-        .copy-btn:hover {
-            background: #5a6268;
-        }
-        
-        .endpoint-description {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 10px;
+        .api-architecture-info {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 5px solid #2196F3;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🧪 API Testing Console</h1>
-            <a href="api-keys.html" class="back-button">← Back to API Keys</a>
+    <div class="main-container">
+        <div class="page-header">
+            <h1><i class="fas fa-vial me-3"></i>API Testing Console</h1>
+            <p class="mb-0">Test both Legacy API and Multi-Account API endpoints</p>
         </div>
 
-        <!-- API Key Input -->
-        <div class="api-key-input">
-            <h3>🔑 Enter Your API Key</h3>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <input 
-                    type="text" 
-                    id="apiKeyInput" 
-                    placeholder="wa_your_api_key_here" 
-                    style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;"
-                >
-                <button onclick="saveApiKey()" class="btn-primary">Save Key</button>
-                <button onclick="clearApiKey()" class="btn-secondary">Clear</button>
-            </div>
-            <span id="savedIndicator" class="saved-indicator" style="display: none;">✓ API Key Saved</span>
-            <div style="margin-top: 10px; font-size: 13px; color: #666;">
-                💡 Your API key is stored locally in your browser and never sent to any external server except the API endpoints you test.
+        <!-- API Architecture Information -->
+        <div class="api-architecture-info">
+            <h5><i class="fas fa-layer-group me-2"></i>API Architecture Overview</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <strong><i class="fas fa-server me-2"></i>Legacy API:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Single WhatsApp account</li>
+                        <li>Endpoints: /send-message, /send-media, etc.</li>
+                        <li>Simple authentication with API keys</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <strong><i class="fas fa-users me-2"></i>Multi-Account API:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Multiple WhatsApp accounts</li>
+                        <li>Endpoints: /api/v2/*, /api/accounts/*</li>
+                        <li>Phone ID + Token authentication</li>
+                    </ul>
+                </div>
             </div>
         </div>
+
+        <!-- Account Selector for Multi-Account API -->
+        <div class="account-selector">
+            <h4><i class="fas fa-mobile-alt me-2"></i>Multi-Account Configuration</h4>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Phone ID</label>
+                    <select class="form-select" id="phoneIdSelect">
+                        <option value="">Select Account</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Account Token</label>
+                    <input type="text" class="form-control" id="accountToken" placeholder="Enter account token" readonly>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Status</label>
+                    <div class="form-control" id="accountStatus" style="background: #f8f9fa;">
+                        <span class="text-muted">No account selected</span>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-3">
+                <button class="btn btn-primary me-2" onclick="refreshAccounts()">
+                    <i class="fas fa-sync me-2"></i>Refresh Accounts
+                </button>
+                <button class="btn btn-outline-secondary" onclick="window.open('/account.html', '_blank')">
+                    <i class="fas fa-plus me-2"></i>Add Account
+                </button>
+            </div>
+        </div>
+
+        <!-- Legacy API Key Input -->
+        <div class="account-selector">
+            <h4><i class="fas fa-key me-2"></i>Legacy API Configuration</h4>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <label class="form-label">API Key</label>
+                    <input type="text" class="form-control" id="apiKeyInput" placeholder="wa_your_api_key_here">
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary me-2" onclick="saveApiKey()">
+                        <i class="fas fa-save me-2"></i>Save Key
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearApiKey()">
+                        <i class="fas fa-times me-2"></i>Clear
+                    </button>
+                </div>
+            </div>
+            <span id="savedIndicator" class="saved-indicator" style="display: none;">
+                <i class="fas fa-check me-1"></i>API Key Saved
+            </span>
+        </div>
+
+        <div class="test-container">
+            <!-- System Health Check -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="method-badge method-get">GET</span>
+                        <strong class="ms-2">/api/health</strong>
+                    </div>
+                </div>
+                <p class="text-muted mb-3">Check overall system health and status</p>
+                <button class="btn btn-primary w-100" onclick="testHealth()">
+                    <i class="fas fa-heartbeat me-2"></i>Test System Health
+                </button>
+                <div id="response-health"></div>
+            </div>
+
+            <!-- Multi-Account Status -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="method-badge method-get">GET</span>
+                        <strong class="ms-2">/api/accounts</strong>
+                    </div>
+                </div>
+                <p class="text-muted mb-3">Get all multi-account information</p>
+                <button class="btn btn-primary w-100" onclick="testMultiAccountStatus()">
+                    <i class="fas fa-users me-2"></i>Get Multi-Account Status
+                </button>
+                <div id="response-multiStatus"></div>
+            </div>
+
+            <!-- Send Message (Multi-Account) -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="method-badge method-post">POST</span>
+                        <strong class="ms-2">/api/v2/send-message</strong>
+                    </div>
+                </div>
+                <p class="text-muted mb-3">Send message via multi-account API</p>
+                <div class="mb-3">
+                    <label class="form-label">To (Phone Number)</label>
+                    <input type="text" class="form-control" id="multiSendMsg_to" placeholder="919876543210">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Message</label>
+                    <textarea class="form-control" id="multiSendMsg_message" rows="3" placeholder="Hello from Multi-Account API!"></textarea>
+                </div>
+                <button class="btn btn-primary w-100" onclick="testMultiSendMessage()">
+                    <i class="fas fa-paper-plane me-2"></i>Send Message (Multi)
+                </button>
+                <div id="response-multiSendMessage"></div>
+            </div>
+
+            <!-- Send Message (Legacy) -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="method-badge method-post">POST</span>
+                        <strong class="ms-2">/api/external/send-message</strong>
+                    </div>
+                </div>
+                <p class="text-muted mb-3">Send message via legacy API</p>
+                <div class="mb-3">
+                    <label class="form-label">To (Phone Number)</label>
+                    <input type="text" class="form-control" id="legacySendMsg_to" placeholder="919876543210">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Message</label>
+                    <textarea class="form-control" id="legacySendMsg_message" rows="3" placeholder="Hello from Legacy API!"></textarea>
+                </div>
+                <button class="btn btn-primary w-100" onclick="testLegacySendMessage()">
+                    <i class="fas fa-paper-plane me-2"></i>Send Message (Legacy)
+                </button>
+                <div id="response-legacySendMessage"></div>
+            </div>
+
+            <!-- Send Media (Multi-Account) -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="method-badge method-post">POST</span>
+                        <strong class="ms-2">/api/v2/send-media</strong>
+                    </div>
+                </div>
+                <p class="text-muted mb-3">Send media via multi-account API</p>
+                <div class="mb-3">
+                    <label class="form-label">To (Phone Number)</label>
+                    <input type="text" class="form-control" id="multiSendMedia_to" placeholder="919876543210">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Media File</label>
+                    <input type="file" class="form-control" id="multiSendMedia_file" accept="image/*,video/*,.pdf,.doc,.docx">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Caption (optional)</label>
+                    <input type="text" class="form-control" id="multiSendMedia_caption" placeholder="Check this out!">
+                </div>
+                <button class="btn btn-primary w-100" onclick="testMultiSendMedia()">
+                    <i class="fas fa-image me-2"></i>Send Media (Multi)
+                </button>
+                <div id="response-multiSendMedia"></div>
+            </div>
+
+            <!-- Create Group (Multi-Account) -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="method-badge method-post">POST</span>
+                        <strong class="ms-2">/api/v2/create-group</strong>
+                    </div>
+                </div>
+                <p class="text-muted mb-3">Create WhatsApp group via multi-account API</p>
+                <div class="mb-3">
+                    <label class="form-label">Group Name</label>
+                    <input type="text" class="form-control" id="multiCreateGroup_name" placeholder="My Test Group">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Participants (comma-separated)</label>
+                    <input type="text" class="form-control" id="multiCreateGroup_participants" placeholder="919876543210,919876543211">
+                </div>
+                <button class="btn btn-primary w-100" onclick="testMultiCreateGroup()">
+                    <i class="fas fa-users me-2"></i>Create Group (Multi)
+                </button>
+                <div id="response-multiCreateGroup"></div>
+            </div>
+
+            <!-- Get Groups (Legacy) -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="method-badge method-get">GET</span>
+                        <strong class="ms-2">/api/external/groups</strong>
+                    </div>
+                </div>
+                <p class="text-muted mb-3">Get all groups via legacy API</p>
+                <button class="btn btn-primary w-100" onclick="testLegacyGetGroups()">
+                    <i class="fas fa-list me-2"></i>Get Groups (Legacy)
+                </button>
+                <div id="response-legacyGroups"></div>
+            </div>
+
+            <!-- Webhook Information -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="method-badge method-post">POST</span>
+                        <strong class="ms-2">Webhook Events</strong>
+                    </div>
+                </div>
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-webhook me-2"></i>Webhook Configuration</h6>
+                    <p class="mb-2">Both API architectures support webhooks for real-time events:</p>
+                    <ul class="mb-2">
+                        <li><strong>message</strong> - New message received</li>
+                        <li><strong>message_ack</strong> - Message status updates</li>
+                        <li><strong>ready</strong> - Account connection status</li>
+                    </ul>
+                    <a href="webhook.html" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-cog me-1"></i>Configure Webhooks
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 text-center">
+            <a href="index.html" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-home me-2"></i>Back to Dashboard
+            </a>
+            <a href="api-keys.html" class="btn btn-outline-primary">
+                <i class="fas fa-key me-2"></i>Manage API Keys
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let accounts = [];
+        let selectedAccount = null;
+
+        // Load saved API key and refresh accounts on page load
+        window.onload = function() {
+            const savedKey = localStorage.getItem('whatsapp_api_key');
+            if (savedKey) {
+                document.getElementById('apiKeyInput').value = savedKey;
+                document.getElementById('savedIndicator').style.display = 'inline';
+            }
+            refreshAccounts();
+        };
+
+        async function refreshAccounts() {
+            try {
+                const response = await fetch('/api/accounts');
+                const data = await response.json();
+                
+                if (data.success) {
+                    accounts = data.accounts;
+                    updateAccountSelector();
+                } else {
+                    console.error('Failed to load accounts:', data.error);
+                }
+            } catch (error) {
+                console.error('Error loading accounts:', error);
+            }
+        }
+
+        function updateAccountSelector() {
+            const select = document.getElementById('phoneIdSelect');
+            select.innerHTML = '<option value="">Select Account</option>';
+            
+            accounts.forEach(account => {
+                const option = document.createElement('option');
+                option.value = account.phone_id;
+                option.textContent = `${account.phone_id} (${account.name || 'Unnamed'}) - ${account.status}`;
+                option.dataset.token = account.token;
+                option.dataset.status = account.status;
+                select.appendChild(option);
+            });
+        }
+
+        document.getElementById('phoneIdSelect').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption.value) {
+                selectedAccount = {
+                    phone_id: selectedOption.value,
+                    token: selectedOption.dataset.token,
+                    status: selectedOption.dataset.status
+                };
+                document.getElementById('accountToken').value = selectedAccount.token;
+                document.getElementById('accountStatus').innerHTML = 
+                    `<span class="badge bg-${selectedAccount.status === 'connected' ? 'success' : 'warning'}">${selectedAccount.status}</span>`;
+            } else {
+                selectedAccount = null;
+                document.getElementById('accountToken').value = '';
+                document.getElementById('accountStatus').innerHTML = '<span class="text-muted">No account selected</span>';
+            }
+        });
+
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            if (!apiKey) {
+                alert('Please enter an API key');
+                return;
+            }
+            localStorage.setItem('whatsapp_api_key', apiKey);
+            document.getElementById('savedIndicator').style.display = 'inline';
+            setTimeout(() => {
+                document.getElementById('savedIndicator').style.display = 'none';
+            }, 3000);
+        }
+
+        function clearApiKey() {
+            localStorage.removeItem('whatsapp_api_key');
+            document.getElementById('apiKeyInput').value = '';
+            document.getElementById('savedIndicator').style.display = 'none';
+        }
+
+        function getApiKey() {
+            const apiKey = localStorage.getItem('whatsapp_api_key');
+            if (!apiKey) {
+                alert('Please enter and save your API key first!');
+                return null;
+            }
+            return apiKey;
+        }
+
+        function getMultiAccountHeaders() {
+            if (!selectedAccount) {
+                alert('Please select a multi-account first!');
+                return null;
+            }
+            return {
+                'phone_id': selectedAccount.phone_id,
+                'token': selectedAccount.token,
+                'Content-Type': 'application/json'
+            };
+        }
+
+        function displayResponse(containerId, response, statusCode, error = null) {
+            const container = document.getElementById(containerId);
+            const isSuccess = statusCode >= 200 && statusCode < 300;
+            
+            const responseClass = isSuccess ? 'response-success' : 'response-error';
+            const statusIcon = isSuccess ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-times-circle"></i>';
+            
+            container.innerHTML = `
+                <div class="response-container ${responseClass}">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>${statusIcon} ${isSuccess ? 'Success' : 'Error'} (Status: ${statusCode})</span>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="copyResponse('${containerId}')">
+                            <i class="fas fa-copy me-1"></i>Copy
+                        </button>
+                    </div>
+                    <div class="response-body" id="${containerId}-body">${error || JSON.stringify(response, null, 2)}</div>
+                </div>
+            `;
+        }
+
+        function copyResponse(containerId) {
+            const responseBody = document.getElementById(containerId + '-body');
+            navigator.clipboard.writeText(responseBody.textContent).then(() => {
+                alert('Response copied to clipboard!');
+            });
+        }
+
+        async function makeMultiAccountRequest(url, method = 'GET', body = null) {
+            const headers = getMultiAccountHeaders();
+            if (!headers) return;
+
+            const options = { method, headers };
+            if (body) {
+                if (body instanceof FormData) {
+                    delete headers['Content-Type']; // Let browser set it for FormData
+                    options.body = body;
+                } else {
+                    options.body = JSON.stringify(body);
+                }
+            }
+
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json();
+                return { data, status: response.status };
+            } catch (error) {
+                return { error: error.message, status: 0 };
+            }
+        }
+
+        async function makeLegacyRequest(url, method = 'GET', body = null) {
+            const apiKey = getApiKey();
+            if (!apiKey) return;
+
+            const options = {
+                method: method,
+                headers: {
+                    'X-API-Key': apiKey,
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json();
+                return { data, status: response.status };
+            } catch (error) {
+                return { error: error.message, status: 0 };
+            }
+        }
+
+        // Test Functions
+        async function testHealth() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                displayResponse('response-health', data, response.status);
+            } catch (error) {
+                displayResponse('response-health', null, 0, error.message);
+            }
+        }
+
+        async function testMultiAccountStatus() {
+            try {
+                const response = await fetch('/api/accounts');
+                const data = await response.json();
+                displayResponse('response-multiStatus', data, response.status);
+            } catch (error) {
+                displayResponse('response-multiStatus', null, 0, error.message);
+            }
+        }
+
+        async function testMultiSendMessage() {
+            const to = document.getElementById('multiSendMsg_to').value;
+            const message = document.getElementById('multiSendMsg_message').value;
+            
+            if (!to || !message) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const result = await makeMultiAccountRequest('/api/v2/send-message', 'POST', { to, message });
+            displayResponse('response-multiSendMessage', result.data, result.status, result.error);
+        }
+
+        async function testLegacySendMessage() {
+            const to = document.getElementById('legacySendMsg_to').value;
+            const message = document.getElementById('legacySendMsg_message').value;
+            
+            if (!to || !message) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const result = await makeLegacyRequest('/api/external/send-message', 'POST', { to, message });
+            displayResponse('response-legacySendMessage', result.data, result.status, result.error);
+        }
+
+        async function testMultiSendMedia() {
+            const to = document.getElementById('multiSendMedia_to').value;
+            const fileInput = document.getElementById('multiSendMedia_file');
+            const caption = document.getElementById('multiSendMedia_caption').value;
+            
+            if (!to || !fileInput.files[0]) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('to', to);
+            formData.append('file', fileInput.files[0]);
+            if (caption) formData.append('caption', caption);
+
+            const result = await makeMultiAccountRequest('/api/v2/send-media', 'POST', formData);
+            displayResponse('response-multiSendMedia', result.data, result.status, result.error);
+        }
+
+        async function testMultiCreateGroup() {
+            const name = document.getElementById('multiCreateGroup_name').value;
+            const participantsStr = document.getElementById('multiCreateGroup_participants').value;
+            
+            if (!name || !participantsStr) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const participants = participantsStr.split(',').map(p => p.trim()).filter(p => p);
+            
+            if (participants.length === 0) {
+                alert('Please enter at least one participant');
+                return;
+            }
+
+            const result = await makeMultiAccountRequest('/api/v2/create-group', 'POST', { name, participants });
+            displayResponse('response-multiCreateGroup', result.data, result.status, result.error);
+        }
+
+        async function testLegacyGetGroups() {
+            const result = await makeLegacyRequest('/api/external/groups');
+            displayResponse('response-legacyGroups', result.data, result.status, result.error);
+        }
+    </script>
+</body>
+</html>
 
         <div class="test-container">
             <!-- Status Endpoint -->

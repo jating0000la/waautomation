@@ -4,6 +4,7 @@ const Contact = require('./Contact');
 const Group = require('./Group');
 const Chat = require('./Chat');
 const WebhookLog = require('./WebhookLog');
+const WhatsAppAccount = require('./WhatsAppAccount');
 
 // Initialize models that require sequelize instance
 const ApiKey = require('./ApiKey')(sequelize);
@@ -18,6 +19,7 @@ module.exports = {
     Group,
     Chat,
     WebhookLog,
+    WhatsAppAccount,
     ApiKey,
     WebhookConfig,
     sequelize // Export sequelize instance for use in routes

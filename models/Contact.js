@@ -52,13 +52,19 @@ const Contact = sequelize.define('Contact', {
     labels: {
         type: DataTypes.JSON,
         allowNull: true
+    },
+    phone_id: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+        comment: 'WhatsApp account phone_id this contact belongs to'
     }
 }, {
     timestamps: true,
     indexes: [
         { fields: ['contactId'] },
         { fields: ['number'] },
-        { fields: ['isGroup'] }
+        { fields: ['isGroup'] },
+        { fields: ['phone_id'] }
     ]
 });
 

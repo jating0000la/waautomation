@@ -3,258 +3,225 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Account & Device</title>
+  <title>Multi-Phone Account Manager</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="assets/styles/app.css" />
+  <style>
+    .account-card {
+      transition: all 0.3s ease;
+      border-left: 4px solid #dee2e6;
+    }
+    .account-card.status-connected {
+      border-left-color: #28a745;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e8f5e8 100%);
+    }
+    .account-card.status-pending {
+      border-left-color: #ffc107;
+      background: linear-gradient(135deg, #f8f9fa 0%, #fff3cd 100%);
+    }
+    .account-card.status-error {
+      border-left-color: #dc3545;
+      background: linear-gradient(135deg, #f8f9fa 0%, #f8d7da 100%);
+    }
+    .qr-container {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .account-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .btn-xs {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+    }
+    .phone-id-input {
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    }
+    .legacy-section {
+      background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+      border: 1px solid #2196f3;
+      border-radius: 10px;
+    }
+  </style>
 </head>
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark bg-success">
     <div class="container">
-      <a class="navbar-brand" href="index.html">WA Automation</a>
+      <a class="navbar-brand" href="index.html">
+        <i class="fab fa-whatsapp me-2"></i>WA Multi-Account Manager
+      </a>
+      <div class="navbar-nav ms-auto">
+        <a class="nav-link" href="multi-account.html">
+          <i class="fas fa-users me-1"></i>Multi-Account UI
+        </a>
+      </div>
     </div>
   </nav>
+
   <main class="container py-4">
-    <div class="page-header">
-      <h1 class="h4 mb-0">Account & Device</h1>
-      <a href="index.html" class="subtle-link">&larr; Back</a>
+    <div class="page-header mb-4">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="h4 mb-1">
+            <i class="fas fa-mobile-alt me-2"></i>Multi-Phone Account Manager
+          </h1>
+          <p class="text-muted mb-0">Manage multiple WhatsApp accounts with phone_id-based isolation</p>
+        </div>
+        <a href="index.html" class="btn btn-outline-secondary">
+          <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+        </a>
+      </div>
     </div>
+
+    <!-- Legacy Account Section -->
+    <div class="legacy-section p-4 mb-4">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h5 class="mb-2">
+            <i class="fas fa-history text-primary me-2"></i>Legacy WhatsApp Account
+          </h5>
+          <p class="text-muted mb-2">
+            Original single-account system for backward compatibility
+          </p>
+          <div id="legacyStatusBadge" class="mb-2">
+            <span class="badge bg-secondary">Loading...</span>
+          </div>
+        </div>
+        <div class="col-md-4 text-end">
+          <div class="d-flex flex-column gap-2">
+            <button class="btn btn-primary btn-sm" id="btnLegacyStatus">
+              <i class="fas fa-info-circle me-1"></i>Check Status
+            </button>
+            <button class="btn btn-outline-warning btn-sm" id="btnLegacyQR">
+              <i class="fas fa-qrcode me-1"></i>Get QR Code
+            </button>
+            <button class="btn btn-outline-danger btn-sm" id="btnLegacyLogout">
+              <i class="fas fa-sign-out-alt me-1"></i>Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Multi-Account Management -->
     <div class="row g-4">
+      <!-- Account Creation -->
       <div class="col-lg-4">
         <div class="card h-100">
-          <div class="card-header bg-white"><strong>Actions</strong></div>
-          <div class="card-body d-grid gap-2">
-            <button class="btn btn-whatsapp" id="btnStatus"><i class="fas fa-info-circle me-1"></i>Status</button>
-            <button class="btn btn-outline-secondary" id="btnQR"><i class="fas fa-qrcode me-1"></i>Get QR Code</button>
-            <button class="btn btn-outline-danger" id="btnLogout"><i class="fas fa-sign-out-alt me-1"></i>Logout</button>
+          <div class="card-header bg-primary text-white">
+            <h6 class="mb-0">
+              <i class="fas fa-plus-circle me-2"></i>Create New Account
+            </h6>
           </div>
-        </div>
-      </div>
-      <div class="col-lg-4">
-        <div class="card h-100">
-          <div class="card-header bg-white"><strong>Status</strong></div>
           <div class="card-body">
-            <div id="statusBadge" class="mb-2"><span class="badge bg-secondary">Unknown</span></div>
-            <pre id="result" class="small text-muted mb-0" style="white-space:pre-wrap"></pre>
+            <form id="createAccountForm">
+              <div class="mb-3">
+                <label for="phoneId" class="form-label">Phone ID *</label>
+                <input type="text" class="form-control phone-id-input" id="phoneId" 
+                       placeholder="e.g., user123, phone_001" 
+                       pattern="[a-zA-Z0-9_-]+" 
+                       title="Only letters, numbers, hyphens, and underscores allowed">
+                <div class="form-text">Unique identifier for this WhatsApp account</div>
+              </div>
+              <div class="mb-3">
+                <label for="accountName" class="form-label">Account Name</label>
+                <input type="text" class="form-control" id="accountName" 
+                       placeholder="e.g., John's Business Account">
+              </div>
+              <div class="mb-3">
+                <label for="webhookUrl" class="form-label">Webhook URL (Optional)</label>
+                <input type="url" class="form-control" id="webhookUrl" 
+                       placeholder="https://your-server.com/webhook">
+              </div>
+              <button type="submit" class="btn btn-success w-100" id="createBtn">
+                <i class="fas fa-plus me-1"></i>Create Account
+              </button>
+            </form>
           </div>
         </div>
       </div>
-      <div class="col-lg-4">
+
+      <!-- QR Code Display -->
+      <div class="col-lg-8">
         <div class="card h-100">
-          <div class="card-header bg-white"><strong>QR Code</strong></div>
-          <div class="card-body d-flex flex-column align-items-center justify-content-center" id="qr">
-            <div class="text-muted small">No QR loaded</div>
+          <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+              <i class="fas fa-qrcode me-2"></i>QR Code Scanner
+            </h6>
+            <small class="badge bg-dark">Select account to show QR</small>
+          </div>
+          <div class="card-body qr-container">
+            <div id="qrDisplay" class="text-center text-muted">
+              <i class="fas fa-mobile-alt fa-3x mb-3 opacity-50"></i>
+              <h5>No Account Selected</h5>
+              <p class="mb-0">Create or select an account to display its QR code</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Accounts List -->
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+              <i class="fas fa-list me-2"></i>All WhatsApp Accounts
+            </h6>
+            <button class="btn btn-light btn-sm" id="refreshAccountsBtn">
+              <i class="fas fa-sync-alt me-1"></i>Refresh
+            </button>
+          </div>
+          <div class="card-body">
+            <div id="accountsList">
+              <div class="text-center text-muted py-4">
+                <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                <p>Loading accounts...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Display -->
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header bg-secondary text-white">
+            <h6 class="mb-0">
+              <i class="fas fa-terminal me-2"></i>System Status & Logs
+            </h6>
+          </div>
+          <div class="card-body">
+            <pre id="systemLogs" class="small text-muted mb-0" style="white-space:pre-wrap; max-height: 300px; overflow-y: auto;">
+System initialized. Ready to manage WhatsApp accounts.
+            </pre>
           </div>
         </div>
       </div>
     </div>
   </main>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    let qrCheckInterval = null;
-    let qrRefreshInterval = null;
-    let statusCheckInterval = null;
-    let lastConnectionStatus = null;
-    
-    async function fetchStatus(){
-      try {
-        const res = await fetch('/status');
-        const data = await res.json();
-        document.getElementById('result').textContent = JSON.stringify(data, null, 2);
-        const badge = document.getElementById('statusBadge');
-        
-        if (data.ready) {
-          badge.innerHTML = '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Ready & Connected</span>';
-          
-          // Show connection change notification
-          if (lastConnectionStatus === false) {
-            showNotification('✅ WhatsApp Connected Successfully!', 'success');
-          }
-          lastConnectionStatus = true;
-          
-          // Stop checking for QR if already connected
-          if (qrCheckInterval) {
-            clearInterval(qrCheckInterval);
-            qrCheckInterval = null;
-          }
-          if (qrRefreshInterval) {
-            clearInterval(qrRefreshInterval);
-            qrRefreshInterval = null;
-          }
-          
-          document.getElementById('qr').innerHTML = `
-            <div class="text-success text-center">
-              <i class="fas fa-check-circle fa-3x mb-3"></i>
-              <h5 class="mb-2">Already Connected</h5>
-              <p class="small text-muted mb-0">Your WhatsApp is connected and ready</p>
-            </div>
-          `;
-        } else {
-          badge.innerHTML = '<span class="badge bg-warning text-dark"><i class="fas fa-qrcode me-1"></i>Waiting for QR Scan</span>';
-          
-          // Show disconnection notification
-          if (lastConnectionStatus === true) {
-            showNotification('⚠️ WhatsApp Disconnected. Please scan QR code.', 'warning');
-          }
-          lastConnectionStatus = false;
-          
-          // Auto-fetch QR if not ready
-          if (!qrCheckInterval) {
-            fetchQR();
-            qrCheckInterval = setInterval(fetchQR, 3000); // Check every 3 seconds
-          }
-          
-          // Auto-refresh QR every 10 seconds
-          if (!qrRefreshInterval) {
-            qrRefreshInterval = setInterval(fetchQR, 10000); // Refresh every 10 seconds
-          }
-        }
-      } catch(e) {
-        document.getElementById('result').textContent = 'Error: ' + e.message;
-        document.getElementById('statusBadge').innerHTML = '<span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Error</span>';
-      }
+    // Global state
+    let accounts = [];
+    let selectedAccount = null;
+    let qrIntervals = new Map(); // Track QR refresh intervals per account
+
+    // Utility functions
+    function log(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const logArea = document.getElementById('systemLogs');
+      const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
+      logArea.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+      logArea.scrollTop = logArea.scrollHeight;
     }
-    
-    async function fetchQR(){
-      const qrDiv = document.getElementById('qr');
-      try {
-        console.log('Fetching QR code...');
-        const res = await fetch('/qr');
-        console.log('QR response status:', res.status);
-        
-        // Parse response once
-        const data = await res.json();
-        console.log('QR data:', data);
-        
-        // Already authenticated
-        if (res.status === 200 && data.authenticated) {
-          console.log('Already authenticated');
-          qrDiv.innerHTML = `
-            <div class="text-success text-center">
-              <i class="fas fa-check-circle fa-3x mb-3"></i>
-              <h5 class="mb-2">Already Connected</h5>
-              <p class="small text-muted mb-0">Your WhatsApp is connected and ready</p>
-            </div>
-          `;
-          return;
-        }
-        
-        // Has QR code
-        if (data.qr) {
-          console.log('QR code received, displaying...');
-          const timestamp = new Date().toLocaleTimeString();
-          qrDiv.innerHTML = `
-            <div class="text-center">
-              <img src="${data.qr}" class="img-fluid border rounded shadow-sm mb-3" alt="QR Code" style="max-width: 280px;"/>
-              <p class="text-success mb-1 fw-bold"><i class="fas fa-mobile-alt me-1"></i>Scan with WhatsApp</p>
-              <small class="text-muted d-block mb-2">Open WhatsApp > Settings > Linked Devices > Link a Device</small>
-              <small class="text-muted"><i class="fas fa-clock me-1"></i>Last updated: ${timestamp}</small>
-              <div class="mt-2">
-                <small class="badge bg-info">Auto-refreshes every 10s</small>
-              </div>
-            </div>
-          `;
-          return;
-        }
-        
-        // QR not ready yet (404 or no qr in data)
-        if (res.status === 404 || data.error) {
-          console.log('QR not ready:', data.message || data.error);
-          qrDiv.innerHTML = `
-            <div class="text-muted text-center">
-              <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
-              <p class="mb-1">Generating QR Code...</p>
-              <small>${data.message || 'Please wait, this may take a moment'}</small>
-            </div>
-          `;
-          return;
-        }
-        
-        // Fallback - unexpected response
-        console.warn('Unexpected QR response:', data);
-        qrDiv.innerHTML = `
-          <div class="text-warning text-center">
-            <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
-            <p class="mb-1">QR not available</p>
-            <small class="text-muted">${data.message || 'Please try refreshing'}</small>
-          </div>
-        `;
-        
-      } catch(e) {
-        console.error('QR fetch error:', e);
-        qrDiv.innerHTML = `
-          <div class="text-danger text-center">
-            <i class="fas fa-times-circle fa-2x mb-2"></i>
-            <p class="mb-1">Error loading QR</p>
-            <small>${e.message}</small>
-            <button class="btn btn-sm btn-outline-danger mt-2" onclick="fetchQR()">Retry</button>
-          </div>
-        `;
-      }
-    }
-    
-    async function logout(){
-      // Show confirmation dialog
-      if (!confirm('⚠️ Are you sure you want to logout from WhatsApp?\n\nThis will:\n• Disconnect your WhatsApp session\n• Clear all cached data\n• Require QR scan to reconnect')) {
-        return;
-      }
-      
-      // Disable logout button to prevent double-clicks
-      const logoutBtn = document.getElementById('btnLogout');
-      const originalText = logoutBtn.innerHTML;
-      logoutBtn.disabled = true;
-      logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Logging out...';
-      
-      try {
-        const res = await fetch('/account/logout', {method: 'POST'});
-        const text = await res.text();
-        
-        // Update result display
-        document.getElementById('result').textContent = text;
-        
-        // Update status badge
-        document.getElementById('statusBadge').innerHTML = '<span class="badge bg-secondary"><i class="fas fa-power-off me-1"></i>Logged Out</span>';
-        
-        // Show success notification
-        showNotification('✅ Logged out successfully! Scan QR code to reconnect.', 'success');
-        
-        // Clear intervals
-        if (qrCheckInterval) {
-          clearInterval(qrCheckInterval);
-          qrCheckInterval = null;
-        }
-        if (qrRefreshInterval) {
-          clearInterval(qrRefreshInterval);
-          qrRefreshInterval = null;
-        }
-        
-        // Reset connection status
-        lastConnectionStatus = false;
-        
-        // Show QR code area with message
-        document.getElementById('qr').innerHTML = `
-          <div class="text-info text-center">
-            <i class="fas fa-qrcode fa-3x mb-3"></i>
-            <p class="mb-2">Logged out successfully</p>
-            <small class="text-muted">Fetching new QR code...</small>
-          </div>
-        `;
-        
-        // Restart status check after 2 seconds
-        setTimeout(() => {
-          fetchStatus();
-        }, 2000);
-        
-      } catch(e) {
-        document.getElementById('result').textContent = 'Error: ' + e.message;
-        showNotification('❌ Error during logout: ' + e.message, 'danger');
-      } finally {
-        // Re-enable logout button
-        logoutBtn.disabled = false;
-        logoutBtn.innerHTML = originalText;
-      }
-    }
-    
-    // Show toast notification
+
     function showNotification(message, type = 'info') {
       const alertDiv = document.createElement('div');
       alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
@@ -268,29 +235,422 @@
       document.body.appendChild(alertDiv);
       setTimeout(() => alertDiv.remove(), 5000);
     }
-    
-    // Attach event listeners to buttons
-    document.getElementById('btnStatus')?.addEventListener('click', () => {
-      fetchStatus();
-      showNotification('🔄 Refreshing status...', 'info');
+
+    function getStatusBadge(status) {
+      switch (status) {
+        case 'connected':
+          return '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Connected</span>';
+        case 'pending':
+          return '<span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Pending QR Scan</span>';
+        case 'disconnected':
+          return '<span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Disconnected</span>';
+        default:
+          return '<span class="badge bg-secondary"><i class="fas fa-question-circle me-1"></i>Unknown</span>';
+      }
+    }
+
+    // API Functions
+    async function createAccount() {
+      const phoneId = document.getElementById('phoneId').value.trim();
+      const accountName = document.getElementById('accountName').value.trim();
+      const webhookUrl = document.getElementById('webhookUrl').value.trim();
+
+      if (!phoneId) {
+        showNotification('❌ Phone ID is required', 'danger');
+        return;
+      }
+
+      if (!/^[a-zA-Z0-9_-]+$/.test(phoneId)) {
+        showNotification('❌ Phone ID can only contain letters, numbers, hyphens, and underscores', 'danger');
+        return;
+      }
+
+      const createBtn = document.getElementById('createBtn');
+      const originalText = createBtn.innerHTML;
+      createBtn.disabled = true;
+      createBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Creating...';
+
+      try {
+        const response = await fetch('/api/accounts/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone_id: phoneId,
+            name: accountName || `Account ${phoneId}`,
+            webhook_url: webhookUrl || null
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          log(`Account created: ${phoneId}`, 'success');
+          showNotification(`✅ Account '${phoneId}' created successfully!`, 'success');
+          
+          // Clear form
+          document.getElementById('createAccountForm').reset();
+          
+          // Refresh accounts list
+          await loadAccounts();
+          
+          // Auto-select and show QR for new account
+          selectAccount(phoneId);
+          
+        } else {
+          log(`Failed to create account: ${data.error}`, 'error');
+          showNotification(`❌ ${data.error || 'Failed to create account'}`, 'danger');
+        }
+      } catch (error) {
+        log(`Error creating account: ${error.message}`, 'error');
+        showNotification(`❌ Error: ${error.message}`, 'danger');
+      } finally {
+        createBtn.disabled = false;
+        createBtn.innerHTML = originalText;
+      }
+    }
+
+    async function loadAccounts() {
+      try {
+        const response = await fetch('/api/accounts');
+        const data = await response.json();
+
+        if (response.ok) {
+          accounts = data.accounts;
+          renderAccountsList();
+          log(`Loaded ${accounts.length} accounts`, 'info');
+        } else {
+          log(`Failed to load accounts: ${data.error}`, 'error');
+        }
+      } catch (error) {
+        log(`Error loading accounts: ${error.message}`, 'error');
+      }
+    }
+
+    function renderAccountsList() {
+      const container = document.getElementById('accountsList');
+      
+      if (accounts.length === 0) {
+        container.innerHTML = `
+          <div class="text-center text-muted py-4">
+            <i class="fas fa-inbox fa-2x mb-3"></i>
+            <h5>No Accounts Found</h5>
+            <p>Create your first WhatsApp account using the form above</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = accounts.map(account => `
+        <div class="account-card card mb-3 status-${account.status}" data-phone-id="${account.phone_id}">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col-md-6">
+                <h6 class="mb-1">
+                  <i class="fas fa-mobile-alt me-2"></i>${account.name || account.phone_id}
+                </h6>
+                <p class="text-muted small mb-1">
+                  <strong>Phone ID:</strong> <code>${account.phone_id}</code>
+                </p>
+                <p class="text-muted small mb-2">
+                  <strong>Created:</strong> ${new Date(account.created_at).toLocaleString()}
+                </p>
+                ${getStatusBadge(account.status)}
+              </div>
+              <div class="col-md-6 text-end">
+                <div class="account-actions">
+                  <button class="btn btn-primary btn-xs" onclick="selectAccount('${account.phone_id}')">
+                    <i class="fas fa-qrcode me-1"></i>Show QR
+                  </button>
+                  <button class="btn btn-info btn-xs" onclick="checkAccountStatus('${account.phone_id}')">
+                    <i class="fas fa-sync-alt me-1"></i>Status
+                  </button>
+                  <button class="btn btn-warning btn-xs" onclick="refreshAccountQR('${account.phone_id}')">
+                    <i class="fas fa-refresh me-1"></i>Refresh QR
+                  </button>
+                  <button class="btn btn-danger btn-xs" onclick="deleteAccount('${account.phone_id}')">
+                    <i class="fas fa-trash me-1"></i>Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function selectAccount(phoneId) {
+      selectedAccount = phoneId;
+      log(`Selected account: ${phoneId}`, 'info');
+      
+      // Highlight selected account
+      document.querySelectorAll('.account-card').forEach(card => {
+        card.classList.remove('border-primary');
+      });
+      document.querySelector(`[data-phone-id="${phoneId}"]`)?.classList.add('border-primary');
+      
+      // Show QR code
+      await showAccountQR(phoneId);
+    }
+
+    async function showAccountQR(phoneId) {
+      const qrDisplay = document.getElementById('qrDisplay');
+      
+      qrDisplay.innerHTML = `
+        <div class="text-center">
+          <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+          <h5>Loading QR Code</h5>
+          <p class="text-muted">Generating QR code for ${phoneId}...</p>
+        </div>
+      `;
+
+      try {
+        const response = await fetch(`/api/accounts/${phoneId}/qr`);
+        const data = await response.json();
+
+        if (response.ok && data.qr_code) {
+          const timestamp = new Date().toLocaleTimeString();
+          qrDisplay.innerHTML = `
+            <div class="text-center">
+              <h5 class="mb-3">
+                <i class="fas fa-mobile-alt me-2 text-primary"></i>${phoneId}
+              </h5>
+              <img src="${data.qr_code}" class="img-fluid border rounded shadow-sm mb-3" 
+                   alt="QR Code for ${phoneId}" style="max-width: 300px;">
+              <div class="alert alert-info mb-3">
+                <h6><i class="fas fa-info-circle me-2"></i>How to connect:</h6>
+                <ol class="mb-0 text-start">
+                  <li>Open WhatsApp on your phone</li>
+                  <li>Go to Settings > Linked Devices</li>
+                  <li>Tap "Link a Device"</li>
+                  <li>Scan this QR code</li>
+                </ol>
+              </div>
+              <small class="text-muted d-block">
+                <i class="fas fa-clock me-1"></i>Generated: ${timestamp}
+              </small>
+              <div class="mt-3">
+                <button class="btn btn-outline-primary btn-sm" onclick="refreshAccountQR('${phoneId}')">
+                  <i class="fas fa-sync-alt me-1"></i>Refresh QR
+                </button>
+                <button class="btn btn-outline-success btn-sm ms-2" onclick="checkAccountStatus('${phoneId}')">
+                  <i class="fas fa-check me-1"></i>Check Status
+                </button>
+              </div>
+            </div>
+          `;
+          
+          // Auto-refresh QR every 30 seconds
+          if (qrIntervals.has(phoneId)) {
+            clearInterval(qrIntervals.get(phoneId));
+          }
+          const interval = setInterval(() => refreshAccountQR(phoneId), 30000);
+          qrIntervals.set(phoneId, interval);
+          
+        } else {
+          qrDisplay.innerHTML = `
+            <div class="text-center text-warning">
+              <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+              <h5>QR Code Not Available</h5>
+              <p>${data.message || 'Unable to generate QR code'}</p>
+              <button class="btn btn-warning" onclick="refreshAccountQR('${phoneId}')">
+                <i class="fas fa-retry me-1"></i>Try Again
+              </button>
+            </div>
+          `;
+        }
+      } catch (error) {
+        qrDisplay.innerHTML = `
+          <div class="text-center text-danger">
+            <i class="fas fa-times-circle fa-2x mb-3"></i>
+            <h5>Error Loading QR Code</h5>
+            <p>${error.message}</p>
+            <button class="btn btn-danger" onclick="refreshAccountQR('${phoneId}')">
+              <i class="fas fa-retry me-1"></i>Retry
+            </button>
+          </div>
+        `;
+        log(`Error loading QR for ${phoneId}: ${error.message}`, 'error');
+      }
+    }
+
+    async function refreshAccountQR(phoneId) {
+      if (selectedAccount === phoneId) {
+        await showAccountQR(phoneId);
+      }
+    }
+
+    async function checkAccountStatus(phoneId) {
+      try {
+        // This would require a new endpoint to check individual account status
+        log(`Checking status for ${phoneId}`, 'info');
+        showNotification(`🔄 Checking status for ${phoneId}...`, 'info');
+        
+        // For now, refresh the accounts list
+        await loadAccounts();
+      } catch (error) {
+        log(`Error checking status for ${phoneId}: ${error.message}`, 'error');
+      }
+    }
+
+    async function deleteAccount(phoneId) {
+      if (!confirm(`⚠️ Are you sure you want to delete account '${phoneId}'?\n\nThis action cannot be undone and will:\n• Remove the account permanently\n• Clear all associated data\n• Disconnect the WhatsApp session`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/accounts/${phoneId}`, {
+          method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          log(`Account deleted: ${phoneId}`, 'success');
+          showNotification(`✅ Account '${phoneId}' deleted successfully`, 'success');
+          
+          // Clear QR if this was the selected account
+          if (selectedAccount === phoneId) {
+            selectedAccount = null;
+            document.getElementById('qrDisplay').innerHTML = `
+              <div class="text-center text-muted">
+                <i class="fas fa-mobile-alt fa-3x mb-3 opacity-50"></i>
+                <h5>Account Deleted</h5>
+                <p class="mb-0">Select another account to show its QR code</p>
+              </div>
+            `;
+          }
+          
+          // Clear QR interval
+          if (qrIntervals.has(phoneId)) {
+            clearInterval(qrIntervals.get(phoneId));
+            qrIntervals.delete(phoneId);
+          }
+          
+          // Refresh accounts list
+          await loadAccounts();
+          
+        } else {
+          log(`Failed to delete account: ${data.error}`, 'error');
+          showNotification(`❌ ${data.error || 'Failed to delete account'}`, 'danger');
+        }
+      } catch (error) {
+        log(`Error deleting account: ${error.message}`, 'error');
+        showNotification(`❌ Error: ${error.message}`, 'danger');
+      }
+    }
+
+    // Legacy account functions
+    async function checkLegacyStatus() {
+      try {
+        const response = await fetch('/status');
+        const data = await response.json();
+        
+        const badge = document.getElementById('legacyStatusBadge');
+        if (data.legacy_client && data.legacy_client.ready) {
+          badge.innerHTML = '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Connected</span>';
+        } else {
+          badge.innerHTML = '<span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Waiting for QR</span>';
+        }
+        
+        log(`Legacy status: ${data.legacy_client?.ready ? 'Connected' : 'Not connected'}`, 'info');
+      } catch (error) {
+        log(`Error checking legacy status: ${error.message}`, 'error');
+      }
+    }
+
+    async function showLegacyQR() {
+      selectedAccount = 'legacy';
+      const qrDisplay = document.getElementById('qrDisplay');
+      
+      qrDisplay.innerHTML = `
+        <div class="text-center">
+          <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+          <h5>Loading Legacy QR Code</h5>
+          <p class="text-muted">Loading QR code for legacy account...</p>
+        </div>
+      `;
+
+      try {
+        const response = await fetch('/qr');
+        const data = await response.json();
+
+        if (data.authenticated) {
+          qrDisplay.innerHTML = `
+            <div class="text-center text-success">
+              <i class="fas fa-check-circle fa-3x mb-3"></i>
+              <h5>Legacy Account Connected</h5>
+              <p class="text-muted">Your legacy WhatsApp account is already connected</p>
+            </div>
+          `;
+        } else if (data.qr) {
+          const timestamp = new Date().toLocaleTimeString();
+          qrDisplay.innerHTML = `
+            <div class="text-center">
+              <h5 class="mb-3">
+                <i class="fas fa-history me-2 text-primary"></i>Legacy Account
+              </h5>
+              <img src="${data.qr}" class="img-fluid border rounded shadow-sm mb-3" 
+                   alt="Legacy QR Code" style="max-width: 300px;">
+              <div class="alert alert-warning mb-3">
+                <h6><i class="fas fa-info-circle me-2"></i>Legacy Account:</h6>
+                <p class="mb-0">This is the original single-account system for backward compatibility</p>
+              </div>
+              <small class="text-muted d-block">
+                <i class="fas fa-clock me-1"></i>Generated: ${timestamp}
+              </small>
+            </div>
+          `;
+        }
+      } catch (error) {
+        qrDisplay.innerHTML = `
+          <div class="text-center text-danger">
+            <i class="fas fa-times-circle fa-2x mb-3"></i>
+            <h5>Error Loading Legacy QR</h5>
+            <p>${error.message}</p>
+          </div>
+        `;
+        log(`Error loading legacy QR: ${error.message}`, 'error');
+      }
+    }
+
+    async function logoutLegacy() {
+      if (!confirm('⚠️ Are you sure you want to logout the legacy account?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/account/logout', { method: 'POST' });
+        if (response.ok) {
+          log('Legacy account logged out', 'success');
+          showNotification('✅ Legacy account logged out', 'success');
+          await checkLegacyStatus();
+        }
+      } catch (error) {
+        log(`Error logging out legacy account: ${error.message}`, 'error');
+      }
+    }
+
+    // Event listeners
+    document.getElementById('createAccountForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      createAccount();
     });
-    document.getElementById('btnQR')?.addEventListener('click', () => {
-      fetchQR();
-      showNotification('🔄 Refreshing QR code...', 'info');
+
+    document.getElementById('refreshAccountsBtn').addEventListener('click', loadAccounts);
+    document.getElementById('btnLegacyStatus').addEventListener('click', checkLegacyStatus);
+    document.getElementById('btnLegacyQR').addEventListener('click', showLegacyQR);
+    document.getElementById('btnLegacyLogout').addEventListener('click', logoutLegacy);
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async () => {
+      log('Multi-Phone Account Manager initialized', 'success');
+      await loadAccounts();
+      await checkLegacyStatus();
     });
-    document.getElementById('btnLogout')?.addEventListener('click', logout);
-    
-    // Auto-load status on page load
-    fetchStatus();
-    
-    // Check status every 5 seconds
-    statusCheckInterval = setInterval(fetchStatus, 5000);
-    
-    // Clean up intervals when page is closed
+
+    // Cleanup intervals on page unload
     window.addEventListener('beforeunload', () => {
-      if (qrCheckInterval) clearInterval(qrCheckInterval);
-      if (qrRefreshInterval) clearInterval(qrRefreshInterval);
-      if (statusCheckInterval) clearInterval(statusCheckInterval);
+      qrIntervals.forEach(interval => clearInterval(interval));
     });
   </script>
 </body>

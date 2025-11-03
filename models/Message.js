@@ -77,6 +77,11 @@ const Message = sequelize.define('Message', {
     fromMe: {
         type: DataTypes.BOOLEAN,
         defaultValue: false
+    },
+    phone_id: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+        comment: 'WhatsApp account phone_id this message belongs to'
     }
 }, {
     timestamps: true,
@@ -85,7 +90,8 @@ const Message = sequelize.define('Message', {
         { fields: ['from'] },
         { fields: ['to'] },
         { fields: ['timestamp'] },
-        { fields: ['isGroupMsg'] }
+        { fields: ['isGroupMsg'] },
+        { fields: ['phone_id'] }
     ]
 });
 

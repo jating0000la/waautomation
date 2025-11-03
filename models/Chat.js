@@ -52,13 +52,19 @@ const Chat = sequelize.define('Chat', {
     lastMessage: {
         type: DataTypes.JSON,
         allowNull: true
+    },
+    phone_id: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+        comment: 'WhatsApp account phone_id this chat belongs to'
     }
 }, {
     timestamps: true,
     indexes: [
         { fields: ['chatId'] },
         { fields: ['isGroup'] },
-        { fields: ['timestamp'] }
+        { fields: ['timestamp'] },
+        { fields: ['phone_id'] }
     ]
 });
 

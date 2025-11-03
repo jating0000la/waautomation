@@ -128,18 +128,59 @@
       </ul>
     </div>
 
+    <!-- Multi-Account Architecture Info -->
     <div class="webhook-card">
-      <h4 class="mb-4"><i class="fas fa-cog me-2"></i>Webhook Endpoint</h4>
+      <h4 class="mb-3"><i class="fas fa-layer-group me-2"></i>Multi-Account Webhook Architecture</h4>
+      <div class="row">
+        <div class="col-md-6">
+          <h6><i class="fas fa-server me-2"></i>Legacy API Webhooks</h6>
+          <ul class="mb-3">
+            <li>Single account webhook configuration</li>
+            <li>Configured via API key settings</li>
+            <li>All events from one WhatsApp account</li>
+          </ul>
+        </div>
+        <div class="col-md-6">
+          <h6><i class="fas fa-users me-2"></i>Multi-Account API Webhooks</h6>
+          <ul class="mb-3">
+            <li>Per-account webhook URLs</li>
+            <li>Account-specific event filtering</li>
+            <li>Configured during account creation</li>
+          </ul>
+        </div>
+      </div>
+      <div class="alert alert-info mb-0">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>Account Management:</strong> Configure webhook URLs when creating accounts at the 
+        <a href="/account.html" class="alert-link">account management page</a>.
+      </div>
+    </div>
+
+    <div class="webhook-card">
+      <h4 class="mb-4"><i class="fas fa-cog me-2"></i>Webhook Testing</h4>
       
-      <div class="mb-3">
+      <div class="mb-4">
         <label class="form-label">
-          <i class="fas fa-link me-1"></i>Your Webhook Endpoint URL
+          <i class="fas fa-link me-1"></i>Test Webhook Endpoint
         </label>
         <div class="endpoint-box">
-          <strong>POST</strong> http://localhost:3001/webhook
+          <strong>POST</strong> http://localhost:3000/webhook
         </div>
         <small class="text-muted">
-          <i class="fas fa-lightbulb me-1"></i>This is where WhatsApp events will be sent
+          <i class="fas fa-lightbulb me-1"></i>This endpoint processes webhook events for testing purposes
+        </small>
+      </div>
+
+      <!-- Account Selector for Multi-Account Testing -->
+      <div class="mb-4">
+        <label class="form-label">
+          <i class="fas fa-mobile-alt me-1"></i>Test Account (Multi-Account API)
+        </label>
+        <select class="form-select" id="accountSelect">
+          <option value="">Select account for testing (optional)</option>
+        </select>
+        <small class="text-muted">
+          <i class="fas fa-info-circle me-1"></i>Select an account to test account-specific webhook events
         </small>
       </div>
 
@@ -150,24 +191,30 @@
           </label>
           <textarea class="form-control" id="webhookData" name="data" required placeholder='{
   "event": "message",
-  "from": "1234567890",
-  "body": "Test message",
-  "timestamp": 1699000000
+  "phone_id": "test_account_1",
+  "from": "1234567890@c.us",
+  "body": "Test message from multi-account API",
+  "timestamp": 1699000000,
+  "type": "chat",
+  "isGroup": false
 }'></textarea>
           <small class="text-muted">
-            <i class="fas fa-info-circle me-1"></i>Enter valid JSON to test your webhook
+            <i class="fas fa-info-circle me-1"></i>Enter valid JSON to test your webhook. Use phone_id for multi-account events.
           </small>
         </div>
 
-        <div class="d-flex gap-3">
+        <div class="d-flex gap-3 flex-wrap">
           <button type="submit" class="btn btn-primary">
             <i class="fas fa-paper-plane me-2"></i>Send Test Webhook
           </button>
           <button type="button" class="btn btn-secondary" id="btnClear">
             <i class="fas fa-eraser me-2"></i>Clear
           </button>
+          <button type="button" class="btn btn-info" id="btnLoadTemplate">
+            <i class="fas fa-file-code me-2"></i>Load Template
+          </button>
           <a href="index.html" class="btn btn-outline-secondary">
-            <i class="fas fa-home me-2"></i>Back to Home
+            <i class="fas fa-home me-2"></i>Back to Dashboard
           </a>
         </div>
       </form>
@@ -197,11 +244,11 @@
       <div class="accordion" id="examplesAccordion">
         <div class="accordion-item">
           <h2 class="accordion-header">
-            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#example1">
-              <i class="fas fa-comment me-2"></i>Incoming Message Event
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#example1">
+              <i class="fas fa-comment me-2"></i>Legacy API - Incoming Message
             </button>
           </h2>
-          <div id="example1" class="accordion-collapse collapse" data-bs-parent="#examplesAccordion">
+          <div id="example1" class="accordion-collapse collapse show" data-bs-parent="#examplesAccordion">
             <div class="accordion-body">
               <pre class="bg-dark text-light p-3 rounded"><code>{
   "event": "message",
@@ -209,7 +256,8 @@
   "body": "Hello, this is a test message",
   "timestamp": 1699000000,
   "type": "chat",
-  "isGroup": false
+  "isGroup": false,
+  "messageId": "msg_12345"
 }</code></pre>
             </div>
           </div>
@@ -218,16 +266,24 @@
         <div class="accordion-item">
           <h2 class="accordion-header">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#example2">
-              <i class="fas fa-check-double me-2"></i>Message Status Event
+              <i class="fas fa-users me-2"></i>Multi-Account API - Message Event
             </button>
           </h2>
           <div id="example2" class="accordion-collapse collapse" data-bs-parent="#examplesAccordion">
             <div class="accordion-body">
               <pre class="bg-dark text-light p-3 rounded"><code>{
-  "event": "message_ack",
-  "messageId": "msg123456",
-  "ack": "read",
-  "timestamp": 1699000000
+  "event": "message",
+  "phone_id": "business_account_1",
+  "account_name": "Business WhatsApp",
+  "from": "1234567890@c.us",
+  "to": "0987654321@c.us",
+  "body": "Hello from multi-account system",
+  "timestamp": 1699000000,
+  "type": "chat",
+  "isGroup": false,
+  "messageId": "msg_67890",
+  "author": null,
+  "fromMe": false
 }</code></pre>
             </div>
           </div>
@@ -236,15 +292,66 @@
         <div class="accordion-item">
           <h2 class="accordion-header">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#example3">
-              <i class="fas fa-plug me-2"></i>Connection Event
+              <i class="fas fa-check-double me-2"></i>Message Status Update
             </button>
           </h2>
           <div id="example3" class="accordion-collapse collapse" data-bs-parent="#examplesAccordion">
             <div class="accordion-body">
               <pre class="bg-dark text-light p-3 rounded"><code>{
+  "event": "message_ack",
+  "phone_id": "business_account_1",
+  "messageId": "msg_67890",
+  "ack": "read",
+  "timestamp": 1699000000,
+  "status": "delivered"
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#example4">
+              <i class="fas fa-plug me-2"></i>Account Connection Event
+            </button>
+          </h2>
+          <div id="example4" class="accordion-collapse collapse" data-bs-parent="#examplesAccordion">
+            <div class="accordion-body">
+              <pre class="bg-dark text-light p-3 rounded"><code>{
   "event": "ready",
+  "phone_id": "business_account_1",
+  "account_name": "Business WhatsApp",
   "status": "connected",
-  "timestamp": 1699000000
+  "timestamp": 1699000000,
+  "client_info": {
+    "platform": "android",
+    "version": "2.23.20.0"
+  }
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#example5">
+              <i class="fas fa-image me-2"></i>Media Message Event
+            </button>
+          </h2>
+          <div id="example5" class="accordion-collapse collapse" data-bs-parent="#examplesAccordion">
+            <div class="accordion-body">
+              <pre class="bg-dark text-light p-3 rounded"><code>{
+  "event": "message",
+  "phone_id": "business_account_1",
+  "from": "1234567890@c.us",
+  "body": "",
+  "timestamp": 1699000000,
+  "type": "image",
+  "hasMedia": true,
+  "mimetype": "image/jpeg",
+  "filename": "photo.jpg",
+  "caption": "Check out this image!",
+  "mediaSize": 245760
 }</code></pre>
             </div>
           </div>
@@ -256,16 +363,52 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     let webhookLogs = [];
+    let accounts = [];
+
+    // Load accounts on page load
+    window.onload = function() {
+      loadAccounts();
+      addLog('Webhook configuration page loaded', 'success');
+    };
+
+    async function loadAccounts() {
+      try {
+        const response = await fetch('/api/accounts');
+        const data = await response.json();
+        
+        if (data.success) {
+          accounts = data.accounts;
+          updateAccountSelect();
+          addLog(`Loaded ${accounts.length} accounts`, 'info');
+        } else {
+          addLog('Failed to load accounts: ' + data.error, 'error');
+        }
+      } catch (error) {
+        addLog('Error loading accounts: ' + error.message, 'error');
+      }
+    }
+
+    function updateAccountSelect() {
+      const select = document.getElementById('accountSelect');
+      select.innerHTML = '<option value="">Select account for testing (optional)</option>';
+      
+      accounts.forEach(account => {
+        const option = document.createElement('option');
+        option.value = account.phone_id;
+        option.textContent = `${account.phone_id} (${account.name || 'Unnamed'}) - ${account.status}`;
+        option.dataset.status = account.status;
+        select.appendChild(option);
+      });
+    }
 
     function addLog(message, type = 'info') {
       const timestamp = new Date().toLocaleTimeString();
       const log = { timestamp, message, type };
       webhookLogs.unshift(log);
-      if (webhookLogs.length > 10) webhookLogs.pop();
+      if (webhookLogs.length > 15) webhookLogs.pop();
       
       const logsDiv = document.getElementById('webhookLogs');
-      const colorMap = { success: '#2ecc71', error: '#e74c3c', info: '#3498db' };
-      const color = colorMap[type] || '#95a5a6';
+      const colorMap = { success: '#2ecc71', error: '#e74c3c', info: '#3498db', warning: '#f39c12' };
       
       logsDiv.innerHTML = webhookLogs.map(l => 
         `<div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #34495e;">
@@ -339,10 +482,55 @@
     document.getElementById('btnClear').addEventListener('click', function() {
       document.getElementById('webhookData').value = '';
       document.getElementById('resultCard').style.display = 'none';
+      addLog('Webhook data cleared', 'info');
     });
 
-    // Add initial log
-    addLog('Webhook configuration page loaded', 'success');
+    document.getElementById('btnLoadTemplate').addEventListener('click', function() {
+      const selectedAccount = document.getElementById('accountSelect').value;
+      
+      let template;
+      if (selectedAccount) {
+        // Multi-account template
+        template = {
+          event: "message",
+          phone_id: selectedAccount,
+          account_name: "Test Account",
+          from: "1234567890@c.us",
+          to: "0987654321@c.us",
+          body: "Test message from multi-account API",
+          timestamp: Math.floor(Date.now() / 1000),
+          type: "chat",
+          isGroup: false,
+          messageId: "msg_" + Math.random().toString(36).substr(2, 9),
+          author: null,
+          fromMe: false
+        };
+      } else {
+        // Legacy API template
+        template = {
+          event: "message",
+          from: "1234567890@c.us",
+          body: "Test message from legacy API",
+          timestamp: Math.floor(Date.now() / 1000),
+          type: "chat",
+          isGroup: false,
+          messageId: "msg_" + Math.random().toString(36).substr(2, 9)
+        };
+      }
+      
+      document.getElementById('webhookData').value = JSON.stringify(template, null, 2);
+      addLog('Template loaded for ' + (selectedAccount ? 'multi-account' : 'legacy') + ' API', 'info');
+    });
+
+    // Account selector change handler
+    document.getElementById('accountSelect').addEventListener('change', function() {
+      const selectedAccount = this.value;
+      if (selectedAccount) {
+        addLog(`Selected account: ${selectedAccount}`, 'info');
+      } else {
+        addLog('No account selected - will use legacy API format', 'info');
+      }
+    });
   </script>
 </body>
 </html>

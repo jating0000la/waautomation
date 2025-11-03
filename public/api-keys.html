@@ -3,15 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Key Management - WhatsApp System</title>
+    <title>API Key Management - WhatsApp Multi-Account System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="assets/styles/app.css">
     <style>
-        .api-key-card {
-            background: white;
-            border-radius: 8px;
+        body { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
             padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.2);
+        }
+        .page-header {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .api-key-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 5px solid #25D366;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+        .api-key-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
         .api-key-header {
             display: flex;
@@ -20,33 +49,57 @@
             margin-bottom: 15px;
         }
         .key-display {
-            background: #f5f5f5;
-            padding: 10px;
-            border-radius: 4px;
-            font-family: monospace;
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
             word-break: break-all;
-            margin: 10px 0;
+            margin: 15px 0;
+            position: relative;
         }
         .permission-badge {
             display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
+            padding: 6px 12px;
+            border-radius: 8px;
             font-size: 12px;
-            margin: 2px;
+            margin: 3px;
+            font-weight: 500;
         }
         .permission-enabled {
             background: #d4edda;
             color: #155724;
+            border: 1px solid #c3e6cb;
         }
         .permission-disabled {
             background: #f8d7da;
             color: #721c24;
+            border: 1px solid #f5c6cb;
         }
-        .status-active {
-            color: #28a745;
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
-        .status-inactive {
-            color: #dc3545;
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            text-align: center;
+            border-left: 5px solid #25D366;
+        }
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #25D366;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 16px;
+            font-weight: 500;
         }
         .modal {
             display: none;
@@ -60,61 +113,149 @@
         }
         .modal-content {
             background-color: white;
-            margin: 50px auto;
+            margin: 30px auto;
             padding: 30px;
-            border-radius: 8px;
+            border-radius: 15px;
             width: 90%;
-            max-width: 600px;
-            max-height: 80vh;
+            max-width: 700px;
+            max-height: 85vh;
             overflow-y: auto;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.3);
         }
-        .permission-checkbox {
-            margin: 10px 0;
+        .form-control, .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #25D366;
+            box-shadow: 0 0 0 0.2rem rgba(37, 211, 102, 0.25);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5);
+        }
+        .btn-secondary {
+            background: #6c757d;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .btn-danger {
+            background: #dc3545;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .alert {
+            border-radius: 10px;
+            border: none;
+            padding: 15px 20px;
+        }
+        .architecture-info {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 5px solid #2196F3;
+        }
+        .api-docs-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 5px solid #17a2b8;
+        }
+        .endpoint-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .table th {
+            background: #25D366;
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 15px;
+        }
+        .table td {
+            padding: 12px 15px;
+            vertical-align: middle;
+            border-bottom: 1px solid #e9ecef;
         }
         .copy-button {
             cursor: pointer;
-            padding: 5px 10px;
-            background: #007bff;
+            padding: 8px 12px;
+            background: #17a2b8;
             color: white;
             border: none;
-            border-radius: 4px;
-            margin-left: 10px;
-        }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .stat-card {
-            background: white;
-            padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            text-align: center;
+            margin-left: 10px;
+            transition: all 0.3s ease;
         }
-        .stat-value {
-            font-size: 32px;
-            font-weight: bold;
-            color: #007bff;
-        }
-        .stat-label {
-            color: #666;
-            font-size: 14px;
+        .copy-button:hover {
+            background: #138496;
+            transform: translateY(-1px);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🔑 API Key Management</h1>
-            <a href="index.html" class="back-button">← Back to Dashboard</a>
+    <div class="main-container">
+        <div class="page-header">
+            <h1><i class="fas fa-key me-3"></i>API Key Management</h1>
+            <p class="mb-0">Manage API keys for Legacy and Multi-Account architectures</p>
+        </div>
+
+        <!-- API Architecture Information -->
+        <div class="architecture-info">
+            <h5><i class="fas fa-layer-group me-2"></i>API Architecture Overview</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6><i class="fas fa-server me-2"></i>Legacy API (Single Account)</h6>
+                    <ul class="mb-0">
+                        <li>Uses API Keys for authentication</li>
+                        <li>Endpoints: /api/external/*</li>
+                        <li>Single WhatsApp connection</li>
+                        <li>Header: <code>X-API-Key: your_key</code></li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6><i class="fas fa-users me-2"></i>Multi-Account API</h6>
+                    <ul class="mb-0">
+                        <li>Uses Phone ID + Token authentication</li>
+                        <li>Endpoints: /api/v2/*, /api/accounts/*</li>
+                        <li>Multiple WhatsApp connections</li>
+                        <li>Headers: <code>phone_id</code> + <code>token</code></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-3">
+                <a href="/account.html" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-plus me-1"></i>Create Multi-Account
+                </a>
+                <a href="/api-testing.html" class="btn btn-outline-success">
+                    <i class="fas fa-vial me-1"></i>Test APIs
+                </a>
+            </div>
         </div>
 
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-value" id="totalKeys">0</div>
-                <div class="stat-label">Total API Keys</div>
+                <div class="stat-label">Legacy API Keys</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value" id="activeKeys">0</div>
@@ -124,116 +265,118 @@
                 <div class="stat-value" id="totalCalls">0</div>
                 <div class="stat-label">Total API Calls</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-value" id="multiAccounts">0</div>
+                <div class="stat-label">Multi-Accounts</div>
+            </div>
         </div>
 
-        <!-- Documentation Section -->
-        <div class="api-key-card" style="margin-bottom: 20px;">
-            <h2 style="margin-top: 0;">📚 API Documentation</h2>
+        <!-- API Documentation Section -->
+        <div class="api-docs-section">
+            <h4><i class="fas fa-book me-2"></i>API Documentation</h4>
             
-            <div style="margin-bottom: 20px;">
-                <h3>Quick Start</h3>
-                <p>Use your API key to authenticate requests to the WhatsApp API. Include it in the <code>X-API-Key</code> header:</p>
-                <div class="key-display">
-                    curl -X POST http://localhost:3000/api/external/send-message \<br>
-                    &nbsp;&nbsp;-H "X-API-Key: YOUR_API_KEY_HERE" \<br>
-                    &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
-                    &nbsp;&nbsp;-d '{"to": "1234567890", "message": "Hello!"}'
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-terminal me-2"></i>Legacy API Usage</h5>
+                    <div class="key-display">
+curl -X POST http://localhost:3000/api/external/send-message \
+  -H "X-API-Key: YOUR_API_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{"to": "1234567890", "message": "Hello!"}'
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="fas fa-network-wired me-2"></i>Multi-Account API Usage</h5>
+                    <div class="key-display">
+curl -X POST http://localhost:3000/api/v2/send-message \
+  -H "phone_id: your_phone_id" \
+  -H "token: your_account_token" \
+  -H "Content-Type: application/json" \
+  -d '{"to": "1234567890", "message": "Hello!"}'
+                    </div>
                 </div>
             </div>
 
-            <div style="margin-bottom: 20px;">
-                <h3>Available Endpoints</h3>
-                <table style="width: 100%; border-collapse: collapse;">
+            <h5><i class="fas fa-list me-2"></i>Available Endpoints</h5>
+            <div class="table-responsive">
+                <table class="table endpoint-table mb-0">
                     <thead>
-                        <tr style="background: #f5f5f5; border-bottom: 2px solid #ddd;">
-                            <th style="padding: 10px; text-align: left;">Method</th>
-                            <th style="padding: 10px; text-align: left;">Endpoint</th>
-                            <th style="padding: 10px; text-align: left;">Permission Required</th>
-                            <th style="padding: 10px; text-align: left;">Description</th>
+                        <tr>
+                            <th>Method</th>
+                            <th>Legacy API Endpoint</th>
+                            <th>Multi-Account API</th>
+                            <th>Permission</th>
+                            <th>Description</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr style="border-bottom: 1px solid #ddd;">
-                            <td style="padding: 8px;"><code>GET</code></td>
-                            <td style="padding: 8px;"><code>/api/external/status</code></td>
-                            <td style="padding: 8px;">-</td>
-                            <td style="padding: 8px;">Check WhatsApp connection status</td>
+                        <tr>
+                            <td><span class="badge bg-success">GET</span></td>
+                            <td><code>/api/external/status</code></td>
+                            <td><code>/api/health</code></td>
+                            <td>-</td>
+                            <td>Check system status</td>
                         </tr>
-                        <tr style="border-bottom: 1px solid #ddd; background: #f9f9f9;">
-                            <td style="padding: 8px;"><code>POST</code></td>
-                            <td style="padding: 8px;"><code>/api/external/send-message</code></td>
-                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">sendMessage</span></td>
-                            <td style="padding: 8px;">Send a text message</td>
+                        <tr>
+                            <td><span class="badge bg-primary">POST</span></td>
+                            <td><code>/api/external/send-message</code></td>
+                            <td><code>/api/v2/send-message</code></td>
+                            <td><span class="permission-badge permission-enabled">sendMessage</span></td>
+                            <td>Send text message</td>
                         </tr>
-                        <tr style="border-bottom: 1px solid #ddd;">
-                            <td style="padding: 8px;"><code>POST</code></td>
-                            <td style="padding: 8px;"><code>/api/external/send-media</code></td>
-                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">sendMedia</span></td>
-                            <td style="padding: 8px;">Send media (image, video, document)</td>
+                        <tr>
+                            <td><span class="badge bg-primary">POST</span></td>
+                            <td><code>/api/external/send-media</code></td>
+                            <td><code>/api/v2/send-media</code></td>
+                            <td><span class="permission-badge permission-enabled">sendMedia</span></td>
+                            <td>Send media files</td>
                         </tr>
-                        <tr style="border-bottom: 1px solid #ddd; background: #f9f9f9;">
-                            <td style="padding: 8px;"><code>POST</code></td>
-                            <td style="padding: 8px;"><code>/api/external/send-location</code></td>
-                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">sendLocation</span></td>
-                            <td style="padding: 8px;">Send GPS location</td>
+                        <tr>
+                            <td><span class="badge bg-primary">POST</span></td>
+                            <td><code>/api/external/send-contact</code></td>
+                            <td><code>/api/v2/send-contact</code></td>
+                            <td><span class="permission-badge permission-enabled">sendContact</span></td>
+                            <td>Send contact card</td>
                         </tr>
-                        <tr style="border-bottom: 1px solid #ddd;">
-                            <td style="padding: 8px;"><code>POST</code></td>
-                            <td style="padding: 8px;"><code>/api/external/send-contact</code></td>
-                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">sendContact</span></td>
-                            <td style="padding: 8px;">Send a contact card</td>
+                        <tr>
+                            <td><span class="badge bg-success">GET</span></td>
+                            <td><code>/api/external/groups</code></td>
+                            <td><code>/api/v2/groups</code></td>
+                            <td><span class="permission-badge permission-enabled">readMessages</span></td>
+                            <td>Get all groups</td>
                         </tr>
-                        <tr style="border-bottom: 1px solid #ddd; background: #f9f9f9;">
-                            <td style="padding: 8px;"><code>POST</code></td>
-                            <td style="padding: 8px;"><code>/api/external/send-reaction</code></td>
-                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">sendReaction</span></td>
-                            <td style="padding: 8px;">React to a message with emoji</td>
+                        <tr>
+                            <td><span class="badge bg-primary">POST</span></td>
+                            <td><code>/api/external/create-group</code></td>
+                            <td><code>/api/v2/create-group</code></td>
+                            <td><span class="permission-badge permission-enabled">createGroup</span></td>
+                            <td>Create WhatsApp group</td>
                         </tr>
-                        <tr style="border-bottom: 1px solid #ddd;">
-                            <td style="padding: 8px;"><code>GET</code></td>
-                            <td style="padding: 8px;"><code>/api/external/chats</code></td>
-                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">readMessages</span></td>
-                            <td style="padding: 8px;">Get all chats</td>
+                        <tr>
+                            <td><span class="badge bg-success">GET</span></td>
+                            <td>-</td>
+                            <td><code>/api/accounts</code></td>
+                            <td>-</td>
+                            <td>List all accounts</td>
                         </tr>
-                        <tr style="border-bottom: 1px solid #ddd; background: #f9f9f9;">
-                            <td style="padding: 8px;"><code>GET</code></td>
-                            <td style="padding: 8px;"><code>/api/external/contacts</code></td>
-                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">readMessages</span></td>
-                            <td style="padding: 8px;">Get all contacts</td>
+                        <tr>
+                            <td><span class="badge bg-primary">POST</span></td>
+                            <td>-</td>
+                            <td><code>/api/accounts/create</code></td>
+                            <td>-</td>
+                            <td>Create new account</td>
                         </tr>
-                        <tr style="border-bottom: 1px solid #ddd;">
-                            <td style="padding: 8px;"><code>GET</code></td>
-                            <td style="padding: 8px;"><code>/api/external/groups</code></td>
-                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">readMessages</span></td>
-                            <td style="padding: 8px;">Get all groups</td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #ddd; background: #f9f9f9;">
-                            <td style="padding: 8px;"><code>POST</code></td>
-                            <td style="padding: 8px;"><code>/api/external/create-group</code></td>
-                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">createGroup</span></td>
-                            <td style="padding: 8px;">Create a new WhatsApp group</td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #ddd;">
-                            <td style="padding: 8px;"><code>POST</code></td>
-                            <td style="padding: 8px;"><code>/api/external/groups/:id/add-participants</code></td>
-                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">manageGroups</span></td>
-                            <td style="padding: 8px;">Add participants to a group</td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #ddd; background: #f9f9f9;">
-                            <td style="padding: 8px;"><code>POST</code></td>
-                            <td style="padding: 8px;"><code>/api/external/groups/:id/remove-participant</code></td>
-                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">manageGroups</span></td>
-                            <td style="padding: 8px;">Remove a participant from group</td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #ddd;">
-                            <td style="padding: 8px;"><code>PUT</code></td>
-                            <td style="padding: 8px;"><code>/api/external/groups/:id</code></td>
-                            <td style="padding: 8px;"><span class="permission-badge permission-enabled">manageGroups</span></td>
-                            <td style="padding: 8px;">Update group settings</td>
+                        <tr>
+                            <td><span class="badge bg-success">GET</span></td>
+                            <td>-</td>
+                            <td><code>/api/accounts/{id}/qr</code></td>
+                            <td>-</td>
+                            <td>Get QR code for account</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
+        </div>
 
             <div style="margin-bottom: 20px;">
                 <h3>Example: Send Message (PowerShell)</h3>
@@ -343,10 +486,19 @@
             </div>
         </div>
 
-        <div class="actions">
-            <button onclick="showCreateModal()" class="btn-primary">+ Create New API Key</button>
-            <button onclick="loadApiKeys()" class="btn-secondary">🔄 Refresh</button>
-            <a href="api-testing.html" class="btn-primary" style="text-decoration: none; display: inline-block;">🧪 Test APIs</a>
+        <div class="d-flex gap-2 flex-wrap">
+            <button onclick="showCreateModal()" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Create New API Key
+            </button>
+            <button onclick="loadApiKeys()" class="btn btn-secondary">
+                <i class="fas fa-sync me-2"></i>Refresh
+            </button>
+            <a href="api-testing.html" class="btn btn-success text-decoration-none">
+                <i class="fas fa-vial me-2"></i>Test APIs
+            </a>
+            <a href="index.html" class="btn btn-outline-secondary text-decoration-none">
+                <i class="fas fa-home me-2"></i>Dashboard
+            </a>
         </div>
 
         <div id="apiKeysList"></div>
@@ -452,28 +604,33 @@
 
         async function loadApiKeys() {
             try {
+                // Load Legacy API Keys
                 const response = await fetch('/api/keys');
                 const data = await response.json();
+                
+                // Load Multi-Account information
+                const accountsResponse = await fetch('/api/accounts');
+                const accountsData = await accountsResponse.json();
                 
                 if (data.success) {
                     currentApiKeys = data.keys;
                     displayApiKeys(data.keys);
-                    updateStats(data.keys);
+                    updateStats(data.keys, accountsData.success ? accountsData.accounts : []);
                 } else {
                     // Handle error response
                     const container = document.getElementById('apiKeysList');
                     if (response.status === 503) {
                         container.innerHTML = `
                             <div class="alert alert-warning">
-                                <h4>⚠️ WhatsApp Not Connected</h4>
+                                <h4><i class="fas fa-exclamation-triangle me-2"></i>WhatsApp Not Connected</h4>
                                 <p>${data.message}</p>
-                                <a href="account.html" class="btn-primary" style="display:inline-block; margin-top:10px;">
-                                    Go to Account Page to Connect →
+                                <a href="account.html" class="btn btn-primary mt-2">
+                                    <i class="fas fa-link me-1"></i>Go to Account Page to Connect
                                 </a>
                             </div>
                         `;
                     } else {
-                        container.innerHTML = `<div class="alert alert-danger">Error: ${data.error || data.message}</div>`;
+                        container.innerHTML = `<div class="alert alert-danger"><i class="fas fa-times-circle me-2"></i>Error: ${data.error || data.message}</div>`;
                     }
                 }
             } catch (error) {
@@ -481,15 +638,15 @@
                 const container = document.getElementById('apiKeysList');
                 container.innerHTML = `
                     <div class="alert alert-warning">
-                        <h4>⚠️ Connection Error</h4>
+                        <h4><i class="fas fa-exclamation-triangle me-2"></i>Connection Error</h4>
                         <p>Unable to load API keys. Please make sure:</p>
                         <ol>
                             <li>WhatsApp is connected (scan QR code at <a href="account.html">account page</a>)</li>
                             <li>The server is running</li>
                             <li>The database is configured correctly</li>
                         </ol>
-                        <button onclick="loadApiKeys()" class="btn-primary" style="margin-top:10px;">
-                            Try Again
+                        <button onclick="loadApiKeys()" class="btn btn-primary mt-2">
+                            <i class="fas fa-redo me-1"></i>Try Again
                         </button>
                     </div>
                 `;
@@ -500,7 +657,15 @@
             const container = document.getElementById('apiKeysList');
             
             if (keys.length === 0) {
-                container.innerHTML = '<div class="alert alert-info">No API keys created yet. Click "Create New API Key" to get started.</div>';
+                container.innerHTML = `
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-info-circle me-2"></i>No Legacy API Keys</h5>
+                        <p class="mb-2">You haven't created any Legacy API keys yet. Legacy API keys are used for single-account WhatsApp automation.</p>
+                        <button onclick="showCreateModal()" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Create Your First API Key
+                        </button>
+                    </div>
+                `;
                 return;
             }
 
@@ -508,49 +673,76 @@
                 <div class="api-key-card">
                     <div class="api-key-header">
                         <div>
-                            <h3>${key.name}</h3>
-                            <span class="${key.isActive ? 'status-active' : 'status-inactive'}">
-                                ${key.isActive ? '✓ Active' : '✗ Inactive'}
+                            <h4><i class="fas fa-key me-2"></i>${key.name}</h4>
+                            <span class="badge ${key.isActive ? 'bg-success' : 'bg-danger'}">
+                                <i class="fas fa-${key.isActive ? 'check' : 'times'} me-1"></i>
+                                ${key.isActive ? 'Active' : 'Inactive'}
                             </span>
                         </div>
-                        <div>
-                            <button onclick="toggleKeyStatus('${key.id}', ${!key.isActive})" class="btn-secondary">
+                        <div class="d-flex gap-2">
+                            <button onclick="toggleKeyStatus('${key.id}', ${!key.isActive})" class="btn btn-sm btn-secondary">
+                                <i class="fas fa-${key.isActive ? 'pause' : 'play'} me-1"></i>
                                 ${key.isActive ? 'Deactivate' : 'Activate'}
                             </button>
-                            <button onclick="regenerateKey('${key.id}')" class="btn-secondary">🔄 Regenerate</button>
-                            <button onclick="deleteKey('${key.id}')" class="btn-danger">🗑️ Delete</button>
+                            <button onclick="regenerateKey('${key.id}')" class="btn btn-sm btn-warning">
+                                <i class="fas fa-sync me-1"></i>Regenerate
+                            </button>
+                            <button onclick="deleteKey('${key.id}')" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash me-1"></i>Delete
+                            </button>
                         </div>
                     </div>
                     
-                    ${key.description ? `<p>${key.description}</p>` : ''}
+                    ${key.description ? `<p class="text-muted mb-3"><i class="fas fa-comment me-1"></i>${key.description}</p>` : ''}
                     
-                    <div style="margin: 10px 0;">
-                        <strong>Usage:</strong> ${key.usageCount || 0} calls | 
-                        <strong>Rate Limit:</strong> ${key.rateLimit}/min | 
-                        <strong>Created:</strong> ${new Date(key.createdAt).toLocaleDateString()}
-                        ${key.lastUsed ? ` | <strong>Last Used:</strong> ${new Date(key.lastUsed).toLocaleString()}` : ''}
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <strong><i class="fas fa-chart-bar me-1"></i>Usage:</strong> ${key.usageCount || 0} calls
+                        </div>
+                        <div class="col-md-3">
+                            <strong><i class="fas fa-tachometer-alt me-1"></i>Rate Limit:</strong> ${key.rateLimit}/min
+                        </div>
+                        <div class="col-md-3">
+                            <strong><i class="fas fa-calendar me-1"></i>Created:</strong> ${new Date(key.createdAt).toLocaleDateString()}
+                        </div>
+                        <div class="col-md-3">
+                            ${key.lastUsed ? 
+                                `<strong><i class="fas fa-clock me-1"></i>Last Used:</strong> ${new Date(key.lastUsed).toLocaleDateString()}` : 
+                                '<span class="text-muted">Never used</span>'
+                            }
+                        </div>
                     </div>
                     
-                    ${key.expiresAt ? `<div><strong>Expires:</strong> ${new Date(key.expiresAt).toLocaleString()}</div>` : ''}
+                    ${key.expiresAt ? 
+                        `<div class="mb-3"><strong><i class="fas fa-hourglass-end me-1"></i>Expires:</strong> <span class="badge bg-warning text-dark">${new Date(key.expiresAt).toLocaleString()}</span></div>` : 
+                        ''
+                    }
                     
-                    <div style="margin-top: 10px;">
-                        <strong>Permissions:</strong><br>
-                        ${Object.entries(key.permissions).map(([perm, enabled]) => 
-                            `<span class="permission-badge ${enabled ? 'permission-enabled' : 'permission-disabled'}">${perm}</span>`
-                        ).join('')}
+                    <div class="mb-3">
+                        <strong><i class="fas fa-shield-alt me-1"></i>Permissions:</strong><br>
+                        <div class="mt-2">
+                            ${Object.entries(key.permissions).map(([perm, enabled]) => 
+                                `<span class="permission-badge ${enabled ? 'permission-enabled' : 'permission-disabled'}">${perm}</span>`
+                            ).join('')}
+                        </div>
                     </div>
                     
                     ${key.ipWhitelist && key.ipWhitelist.length > 0 ? 
-                        `<div style="margin-top: 10px;"><strong>IP Whitelist:</strong> ${key.ipWhitelist.join(', ')}</div>` 
-                        : ''}
+                        `<div class="mb-0">
+                            <strong><i class="fas fa-globe me-1"></i>IP Whitelist:</strong> 
+                            <code>${key.ipWhitelist.join(', ')}</code>
+                        </div>` : 
+                        ''
+                    }
                 </div>
             `).join('');
         }
 
-        function updateStats(keys) {
+        function updateStats(keys, accounts = []) {
             document.getElementById('totalKeys').textContent = keys.length;
             document.getElementById('activeKeys').textContent = keys.filter(k => k.isActive).length;
             document.getElementById('totalCalls').textContent = keys.reduce((sum, k) => sum + (k.usageCount || 0), 0);
+            document.getElementById('multiAccounts').textContent = accounts.length;
         }
 
         function showCreateModal() {
@@ -697,5 +889,6 @@
             }
         }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

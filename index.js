@@ -10,19 +10,21 @@ require('dotenv').config();
 
 // Database imports
 const { sequelize, testConnection } = require('./database');
-const { Message, Contact, Group, Chat, WebhookLog, ApiKey } = require('./models');
-
-// Bulk messaging imports
-const bulkRoutes = require('./bulk/routes');
-const bulkModels = require('./bulk/models');
+const { Message, Contact, Group, Chat, WebhookLog, ApiKey, WhatsAppAccount } = require('./models');
 
 // External API imports
 const externalApiRoutes = require('./routes/externalApi');
 const apiKeysRoutes = require('./routes/apiKeys');
+const accountManagerRoutes = require('./routes/accountManager');
+const multiAccountApiRoutes = require('./routes/multiAccountApi');
 const webhookService = require('./services/webhookService');
+
+// Multi-account support
+const phoneSessionManager = require('./services/phoneSessionManager');
 
 // Security middleware imports
 const { securityHeaders, apiLimiter, csrfProtection } = require('./middleware/security');
+const { legacyAuthMiddleware, optionalAuthMiddleware } = require('./middleware/legacyAuth');
 
 const app = express();
 
@@ -42,17 +44,14 @@ const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json({ limit: '10mb' })); // Add size limit
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
-// Add bulk messaging routes
-app.use('/api/bulk', bulkRoutes);
-
-// Add external API routes (for third-party integrations)
+// Add API routes
 app.use('/api/external', externalApiRoutes);
-
-// Add API key management routes (admin only)
 app.use('/api/keys', apiKeysRoutes);
+app.use('/api/accounts', accountManagerRoutes);
+app.use('/api/v2', multiAccountApiRoutes); // New multi-account API
 
 // WhatsApp client
-const client = new Client({
+let client = new Client({
     authStrategy: new LocalAuth({
         dataPath: '.wwebjs_auth'
     }),
@@ -65,8 +64,13 @@ const client = new Client({
             '--disable-accelerated-2d-canvas',
             '--no-first-run',
             '--no-zygote',
+            '--single-process',
             '--disable-gpu'
         ]
+    },
+    webVersionCache: {
+        type: 'remote',
+        remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html'
     }
 });
 
@@ -88,13 +92,8 @@ client.on('ready', async () => {
     
     // Sync database tables
     try {
-        await sequelize.sync({ alter: true });
+        await sequelize.sync({ force: false });
         console.log('✅ Database tables synchronized');
-        
-        // Initialize bulk messaging models
-        const bulkSequelize = require('./bulk/models').sequelize;
-        await bulkSequelize.sync({ alter: true });
-        console.log('✅ Bulk messaging tables synchronized');
         
         // Initialize webhook service
         await webhookService.initialize();
@@ -139,36 +138,6 @@ client.on('message', async msg => {
         console.error('❌ Error triggering webhook:', error);
     }
     
-    // Check for STOP keyword to add to DND list
-    if (msg.body && msg.body.trim().toUpperCase() === 'STOP' && !msg.fromMe && !msg.isGroupMsg) {
-        try {
-            const DND = bulkModels.DND;
-            const phoneNumber = msg.from.replace('@c.us', '');
-            
-            // Check if already in DND
-            const existingDND = await DND.findOne({ where: { phone: phoneNumber } });
-            
-            if (!existingDND) {
-                await DND.create({
-                    phone: phoneNumber,
-                    reason: 'User sent STOP keyword',
-                    source: 'STOP_keyword',
-                    addedBy: 'system'
-                });
-                
-                console.log(`✅ Added ${phoneNumber} to DND list (STOP keyword received)`);
-                
-                // Send confirmation message
-                await msg.reply('✅ You have been unsubscribed from our messages. You will not receive any more messages from us. To re-subscribe, please contact us directly.');
-            } else {
-                console.log(`ℹ️ ${phoneNumber} already in DND list`);
-                await msg.reply('You are already unsubscribed from our messages.');
-            }
-        } catch (error) {
-            console.error('❌ Error adding to DND list:', error);
-        }
-    }
-    
     // Save message to database
     try {
         const chat = await msg.getChat();
@@ -184,7 +153,7 @@ client.on('message', async msg => {
             isUser: contact.isUser,
             isGroup: contact.isGroup,
             isWAContact: contact.isWAContact
-        });
+        }); 
         
         // Save or update chat
         await Chat.upsert({
@@ -230,26 +199,81 @@ client.on('message', async msg => {
     }
 });
 
-// Add error handling to prevent crashes
+// Enhanced error handling with logging
+const { logger } = require('./utils/logger');
+
 process.on('unhandledRejection', (reason, promise) => {
-    console.log('Unhandled Rejection at:', promise, 'reason:', reason);
+    logger.error('Unhandled Rejection at:', { promise, reason });
+    // Log to database or external monitoring service
+    console.error('❌ UNHANDLED REJECTION:', reason);
 });
 
 process.on('uncaughtException', (error) => {
-    console.log('Uncaught Exception:', error);
+    logger.error('Uncaught Exception:', error);
+    console.error('❌ UNCAUGHT EXCEPTION:', error);
+    
+    // Attempt graceful shutdown
+    gracefulShutdown('UNCAUGHT_EXCEPTION');
 });
+
+process.on('SIGTERM', () => {
+    logger.info('SIGTERM signal received: closing HTTP server');
+    gracefulShutdown('SIGTERM');
+});
+
+process.on('SIGINT', () => {
+    logger.info('SIGINT signal received: closing HTTP server');
+    gracefulShutdown('SIGINT');
+});
+
+// Graceful shutdown handler
+async function gracefulShutdown(signal) {
+    console.log(`\n🛑 ${signal} received. Starting graceful shutdown...`);
+    
+    try {
+        // Close all WhatsApp clients
+        console.log('📱 Closing WhatsApp clients...');
+        
+        // Close legacy client
+        if (client) {
+            await client.destroy().catch(err => 
+                console.error('Error destroying legacy client:', err)
+            );
+        }
+        
+        // Close all multi-account sessions
+        const sessions = phoneSessionManager.getAllSessions();
+        for (const session of sessions) {
+            try {
+                await phoneSessionManager.removeSession(session.phone_id);
+            } catch (err) {
+                console.error(`Error closing session ${session.phone_id}:`, err);
+            }
+        }
+        
+        // Close database connections
+        console.log('💾 Closing database connections...');
+        await sequelize.close();
+        
+        console.log('✅ Graceful shutdown completed');
+        process.exit(0);
+    } catch (error) {
+        console.error('❌ Error during graceful shutdown:', error);
+        process.exit(1);
+    }
+}
 
 // --- ROUTES ---
 
 // Reject a WhatsApp call
-app.post('/reject-call', async (req, res) => {
+app.post('/reject-call', legacyAuthMiddleware, async (req, res) => {
     const { callId } = req.body;
     if (!callId) return res.status(400).json({ error: 'Missing callId' });
     res.status(501).json({ error: 'Rejecting calls by ID is not supported in whatsapp-web.js API' });
 });
 
 // Send Reaction to a message
-app.post('/send-reaction', async (req, res) => {
+app.post('/send-reaction', legacyAuthMiddleware, async (req, res) => {
     const { to, msgId, reaction } = req.body;
     if (!to || !msgId || !reaction) return res.status(400).json({ error: 'Missing required fields' });
     try {
@@ -293,6 +317,7 @@ app.get('/qr', async (req, res) => {
             message: 'Scan this QR code with WhatsApp to login'
         });
     } catch (error) {
+        logger.error('Error generating QR code:', error);
         console.error('Error generating QR code:', error);
         res.status(500).json({ 
             error: 'Failed to generate QR code',
@@ -301,37 +326,190 @@ app.get('/qr', async (req, res) => {
     }
 });
 
-// Get client status
-app.get('/status', (req, res) => {
-    res.json({ 
-        ready: clientReady,
-        hasQR: !!qrCodeData,
-        message: clientReady ? 'WhatsApp is connected and ready' : 'Waiting for authentication'
+// Health check endpoint
+app.get('/health', async (req, res) => {
+    try {
+        // Check database connection
+        await sequelize.authenticate();
+        const dbStatus = 'connected';
+        
+        // Get session information
+        const allSessions = phoneSessionManager.getAllSessions();
+        
+        res.json({
+            status: 'healthy',
+            timestamp: new Date().toISOString(),
+            uptime: process.uptime(),
+            memory: {
+                used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+                total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+                unit: 'MB'
+            },
+            database: dbStatus,
+            legacy_client: {
+                ready: clientReady,
+                has_qr: !!qrCodeData
+            },
+            multi_account: {
+                total_sessions: allSessions.length,
+                connected: allSessions.filter(s => s.status === 'connected').length
+            }
+        });
+    } catch (error) {
+        logger.error('Health check failed:', error);
+        res.status(503).json({
+            status: 'unhealthy',
+            timestamp: new Date().toISOString(),
+            error: error.message
+        });
+    }
+});
+
+// --- MULTI-ACCOUNT STATUS AND INFO ---
+
+// Get system status (shows both legacy and multi-account status)
+app.get('/status', async (req, res) => {
+    try {
+        // Legacy client status
+        const legacyStatus = {
+            ready: clientReady,
+            hasQR: !!qrCodeData,
+            message: clientReady ? 'Legacy WhatsApp is connected' : 'Legacy client waiting for authentication'
+        };
+
+        // Multi-account status
+        const allSessions = phoneSessionManager.getAllSessions();
+        const multiAccountStatus = {
+            total_accounts: allSessions.length,
+            connected_accounts: allSessions.filter(s => s.status === 'connected').length,
+            pending_accounts: allSessions.filter(s => s.status === 'pending').length,
+            accounts: allSessions
+        };
+
+        res.json({
+            success: true,
+            timestamp: new Date().toISOString(),
+            legacy_client: legacyStatus,
+            multi_account: multiAccountStatus,
+            api_info: {
+                legacy_endpoints: ['/send-message', '/send-media', '/create-group'],
+                multi_account_endpoints: ['/api/v2/send-message', '/api/v2/send-media', '/api/v2/create-group'],
+                account_management: ['/api/accounts/create', '/api/accounts/{phone_id}/qr', '/api/accounts/{phone_id}/status']
+            }
+        });
+    } catch (error) {
+        console.error('❌ Error getting status:', error);
+        res.status(500).json({
+            error: 'Failed to get status',
+            message: error.message
+        });
+    }
+});
+
+// API documentation endpoint
+app.get('/api/docs', (req, res) => {
+    res.json({
+        name: 'WhatsApp Multi-Account API',
+        version: '2.0.0',
+        description: 'WhatsApp automation with multiple account support',
+        endpoints: {
+            account_management: {
+                create_account: {
+                    method: 'POST',
+                    path: '/api/accounts/create',
+                    body: {
+                        phone_id: 'string (required)',
+                        name: 'string (optional)',
+                        webhook_url: 'string (optional)',
+                        webhook_events: 'array (optional)'
+                    },
+                    response: {
+                        success: true,
+                        account: {
+                            phone_id: 'string',
+                            token: 'string',
+                            status: 'pending'
+                        }
+                    }
+                },
+                get_qr: {
+                    method: 'GET',
+                    path: '/api/accounts/{phone_id}/qr',
+                    response: {
+                        success: true,
+                        qr_code: 'base64_image_string'
+                    }
+                },
+                get_status: {
+                    method: 'GET',
+                    path: '/api/accounts/{phone_id}/status',
+                    response: {
+                        success: true,
+                        account: {
+                            phone_id: 'string',
+                            status: 'connected|pending|disconnected|failed'
+                        }
+                    }
+                }
+            },
+            messaging: {
+                send_message: {
+                    method: 'POST',
+                    path: '/api/v2/send-message',
+                    headers: {
+                        phone_id: 'string (required)',
+                        token: 'string (required)'
+                    },
+                    body: {
+                        to: 'string (phone number)',
+                        message: 'string'
+                    }
+                },
+                send_media: {
+                    method: 'POST',
+                    path: '/api/v2/send-media',
+                    headers: {
+                        phone_id: 'string (required)',
+                        token: 'string (required)'
+                    },
+                    body: 'multipart/form-data',
+                    fields: {
+                        to: 'string (phone number)',
+                        file: 'file',
+                        caption: 'string (optional)'
+                    }
+                }
+            }
+        },
+        usage_example: {
+            '1_create_account': {
+                url: 'POST /api/accounts/create',
+                data: {
+                    phone_id: 'my_phone_1',
+                    name: 'My Business Account'
+                }
+            },
+            '2_get_qr_code': {
+                url: 'GET /api/accounts/my_phone_1/qr',
+                description: 'Scan the returned QR code with WhatsApp'
+            },
+            '3_send_message': {
+                url: 'POST /api/v2/send-message',
+                headers: {
+                    phone_id: 'my_phone_1',
+                    token: 'your_account_token'
+                },
+                data: {
+                    to: '1234567890',
+                    message: 'Hello from multi-account API!'
+                }
+            }
+        }
     });
 });
 
-client.on('authenticated', () => {
-    console.log('AUTHENTICATED');
-});
-
-client.on('auth_failure', msg => {
-    console.error('AUTHENTICATION FAILURE', msg);
-});
-
-client.on('disconnected', (reason) => {
-    clientReady = false;
-    global.whatsappReady = false;
-    console.log('Client was logged out', reason);
-});
-
-// Webhook for incoming messages
-app.post('/webhook', (req, res) => {
-    // You can process incoming webhook data here
-    res.sendStatus(200);
-});
-
 // Send text message
-app.post('/send-message', async (req, res) => {
+app.post('/send-message', legacyAuthMiddleware, async (req, res) => {
     const { to, message } = req.body;
     
     // Validate input
@@ -370,7 +548,7 @@ app.post('/send-message', async (req, res) => {
 });
 
 // Send media/file
-app.post('/send-media', upload.single('file'), async (req, res) => {
+app.post('/send-media', legacyAuthMiddleware, upload.single('file'), async (req, res) => {
     const { to, caption } = req.body;
     
     // Validate input
@@ -424,7 +602,7 @@ app.post('/send-media', upload.single('file'), async (req, res) => {
 });
 
 // Group management example: create group
-app.post('/create-group', async (req, res) => {
+app.post('/create-group', legacyAuthMiddleware, async (req, res) => {
     const { name, participants } = req.body;
     
     // Validate input
@@ -463,12 +641,6 @@ app.post('/create-group', async (req, res) => {
     }
 });
 
-// Listen for incoming messages and forward to webhook (if needed)
-client.on('message', async msg => {
-    // You can POST to your webhook here if needed
-    console.log('Received message:', msg.body);
-});
-
 // --- ACCOUNT ---
 app.get('/account/settings', async (req, res) => {
     // Placeholder: Return WhatsApp account settings
@@ -504,7 +676,7 @@ app.post('/send-poll', async (req, res) => {
 });
 
 // Send file by URL
-app.post('/send-file-by-url', async (req, res) => {
+app.post('/send-file-by-url', legacyAuthMiddleware, async (req, res) => {
     const { to, url, caption } = req.body;
     if (!to || !url) return res.status(400).json({ error: 'Missing to or url' });
     try {
@@ -529,7 +701,7 @@ app.post('/upload-file', upload.single('file'), async (req, res) => {
 });
 
 // Send location (already implemented as /send-location)
-app.post('/send-location', async (req, res) => {
+app.post('/send-location', legacyAuthMiddleware, async (req, res) => {
     const { to, latitude, longitude, description } = req.body;
     if (!to || !latitude || !longitude) return res.status(400).json({ error: 'Missing params' });
     try {
@@ -545,7 +717,7 @@ app.post('/send-location', async (req, res) => {
 });
 
 // Send contact
-app.post('/send-contact', async (req, res) => {
+app.post('/send-contact', legacyAuthMiddleware, async (req, res) => {
     const { to, contactId } = req.body;
     if (!to || !contactId) return res.status(400).json({ error: 'Missing to or contactId' });
     try {
@@ -574,7 +746,7 @@ app.post('/send-interactive-buttons-reply', async (req, res) => {
 });
 
 // Forward messages
-app.post('/forward-messages', async (req, res) => {
+app.post('/forward-messages', legacyAuthMiddleware, async (req, res) => {
     const { to, messageIds } = req.body;
     if (!to || !Array.isArray(messageIds)) return res.status(400).json({ error: 'Missing to or messageIds' });
     try {
@@ -610,7 +782,7 @@ app.get('/queue/messages', async (req, res) => {
 // --- GROUPS ---
 // CreateGroup already implemented as /create-group
 
-app.post('/groups/update-name', async (req, res) => {
+app.post('/groups/update-name', legacyAuthMiddleware, async (req, res) => {
     const { groupId, name } = req.body;
     if (!groupId || !name) return res.status(400).json({ error: 'Missing params' });
     try {
@@ -622,7 +794,7 @@ app.post('/groups/update-name', async (req, res) => {
     }
 });
 
-app.post('/groups/update-settings', async (req, res) => {
+app.post('/groups/update-settings', legacyAuthMiddleware, async (req, res) => {
     const { groupId, settings } = req.body;
     // settings: { sendMessages: true/false, editInfo: true/false }
     if (!groupId || !settings) return res.status(400).json({ error: 'Missing params' });
@@ -748,7 +920,7 @@ app.get('/groups/data/:groupId', async (req, res) => {
     }
 });
 
-app.post('/groups/add-participant', async (req, res) => {
+app.post('/groups/add-participant', legacyAuthMiddleware, async (req, res) => {
     const { groupId, participant } = req.body;
     
     if (!groupId || !participant) {
@@ -782,7 +954,7 @@ app.post('/groups/add-participant', async (req, res) => {
     }
 });
 
-app.post('/groups/remove-participant', async (req, res) => {
+app.post('/groups/remove-participant', legacyAuthMiddleware, async (req, res) => {
     const { groupId, participant } = req.body;
     
     if (!groupId || !participant) {
@@ -814,7 +986,7 @@ app.post('/groups/remove-participant', async (req, res) => {
     }
 });
 
-app.post('/groups/set-admin', async (req, res) => {
+app.post('/groups/set-admin', legacyAuthMiddleware, async (req, res) => {
     const { groupId, participant } = req.body;
     if (!groupId || !participant) return res.status(400).json({ error: 'Missing params' });
     try {
@@ -826,7 +998,7 @@ app.post('/groups/set-admin', async (req, res) => {
     }
 });
 
-app.post('/groups/remove-admin', async (req, res) => {
+app.post('/groups/remove-admin', legacyAuthMiddleware, async (req, res) => {
     const { groupId, participant } = req.body;
     if (!groupId || !participant) return res.status(400).json({ error: 'Missing params' });
     try {
@@ -843,7 +1015,7 @@ app.post('/groups/set-picture', async (req, res) => {
     res.status(501).json({ error: 'SetGroupPicture not supported in whatsapp-web.js' });
 });
 
-app.post('/groups/leave', async (req, res) => {
+app.post('/groups/leave', legacyAuthMiddleware, async (req, res) => {
     const { groupId } = req.body;
     if (!groupId) return res.status(400).json({ error: 'Missing groupId' });
     try {
@@ -862,7 +1034,7 @@ app.get('/statuses', async (req, res) => {
 });
 
 // --- READ MARK ---
-app.post('/read-mark', async (req, res) => {
+app.post('/read-mark', legacyAuthMiddleware, async (req, res) => {
     const { chatId } = req.body;
     if (!chatId) return res.status(400).json({ error: 'Missing chatId' });
     try {
@@ -1170,45 +1342,8 @@ app.get('/api/messages/export', async (req, res) => {
     }
 });
 
-// DND Auto-Add Stats API Endpoint
-app.get('/api/dnd/stop-keyword-stats', async (req, res) => {
-    try {
-        const DND = bulkModels.DND;
-        
-        const total = await DND.count();
-        const stopKeyword = await DND.count({ where: { source: 'STOP_keyword' } });
-        const manual = await DND.count({ where: { source: 'manual' } });
-        const admin = await DND.count({ where: { source: 'admin' } });
-        
-        // Get recent STOP keyword additions
-        const recentStops = await DND.findAll({
-            where: { source: 'STOP_keyword' },
-            limit: 10,
-            order: [['addedAt', 'DESC']],
-            attributes: ['phone', 'reason', 'addedAt']
-        });
-
-        res.json({
-            success: true,
-            stats: {
-                total,
-                stopKeyword,
-                manual,
-                admin
-            },
-            recentStops
-        });
-    } catch (error) {
-        console.error('Error fetching DND stats:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: error.message 
-        });
-    }
-});
-
 // Start server with database initialization
-// Expose client globally for bulk messaging services
+// Expose client globally for bulk messaging services (legacy)
 global.whatsappClient = client;
 
 const startServer = async () => {
@@ -1216,15 +1351,39 @@ const startServer = async () => {
         // Test database connection
         await testConnection();
         
-        // Initialize WhatsApp client
+        // Sync database tables (including new WhatsAppAccount table)
+        await sequelize.sync({ force: false });
+        console.log('✅ Database tables synchronized');
+        
+        // Initialize webhook service
+        await webhookService.initialize();
+        console.log('✅ Webhook service initialized');
+        
+        // Initialize legacy WhatsApp client (for backward compatibility)
         client.initialize();
+        
+        // Initialize multi-account phone session manager
+        console.log('🔄 Initializing multi-account phone session manager...');
+        await phoneSessionManager.initialize();
+        console.log('✅ Multi-account phone session manager initialized');
         
         // Start Express server
         app.listen(PORT, () => {
             console.log(`🚀 Server running on port ${PORT}`);
             console.log(`🌐 Web interface: http://localhost:${PORT}`);
-            console.log(`📱 QR Code: http://localhost:${PORT}/qr`);
-            console.log(`🗄️ Database: PostgreSQL connected`);
+            console.log(`📱 Legacy QR Code: http://localhost:${PORT}/qr`);
+            console.log(`� Account Management: http://localhost:${PORT}/account.html`);
+            console.log(`�🗄️ Database: PostgreSQL connected`);
+            console.log('');
+            console.log('📋 API Endpoints:');
+            console.log('   📊 Account Management: /api/accounts/*');
+            console.log('   📤 Multi-Account API: /api/v2/*');
+            console.log('   🔗 Legacy API: /send-message, /send-media, etc.');
+            console.log('');
+            console.log('🎯 Multi-Account Usage:');
+            console.log('   1. Create account: POST /api/accounts/create');
+            console.log('   2. Get QR code: GET /api/accounts/{phone_id}/qr');
+            console.log('   3. Use API with headers: phone_id, token');
         });
     } catch (error) {
         console.error('❌ Failed to start server:', error);

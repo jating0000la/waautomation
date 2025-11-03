@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Multi-Account Manager</title>
+    <link rel="stylesheet" href="assets/styles/app.css">
+    <style>
+        .account-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+            background: #f9f9f9;
+        }
+        .account-card.connected { border-color: #4CAF50; background: #f0f8f0; }
+        .account-card.pending { border-color: #FF9800; background: #fff8f0; }
+        .account-card.disconnected { border-color: #f44336; background: #f8f0f0; }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-connected { background: #4CAF50; }
+        .status-pending { background: #FF9800; }
+        .status-disconnected { background: #f44336; }
+        .status-failed { background: #9C27B0; }
+        .qr-code {
+            max-width: 200px;
+            margin: 10px 0;
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .btn {
+            padding: 8px 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn:hover { opacity: 0.8; }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .hidden { display: none; }
+        .api-example {
+            background: #f1f1f1;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 WhatsApp Multi-Account Manager</h1>
+        
+        <!-- System Status -->
+        <div class="section">
+            <h2>📊 System Status</h2>
+            <div id="systemStatus">Loading...</div>
+        </div>
+
+        <!-- Create New Account -->
+        <div class="section">
+            <h2>➕ Create New Account</h2>
+            <form id="createAccountForm">
+                <div class="form-group">
+                    <label for="phoneId">Phone ID (Unique identifier):</label>
+                    <input type="text" id="phoneId" name="phoneId" placeholder="e.g., business_1, personal, shop_main" required>
+                    <small>Use letters, numbers, hyphens, and underscores only</small>
+                </div>
+                <div class="form-group">
+                    <label for="accountName">Display Name (Optional):</label>
+                    <input type="text" id="accountName" name="accountName" placeholder="e.g., My Business Account">
+                </div>
+                <div class="form-group">
+                    <label for="webhookUrl">Webhook URL (Optional):</label>
+                    <input type="url" id="webhookUrl" name="webhookUrl" placeholder="https://your-server.com/webhook">
+                </div>
+                <button type="submit" class="btn btn-primary">Create Account</button>
+            </form>
+        </div>
+
+        <!-- Accounts List -->
+        <div class="section">
+            <h2>📱 WhatsApp Accounts</h2>
+            <button class="btn btn-primary" onclick="loadAccounts()">🔄 Refresh</button>
+            <div id="accountsList">Loading accounts...</div>
+        </div>
+
+        <!-- API Usage Examples -->
+        <div class="section">
+            <h2>📖 API Usage Examples</h2>
+            <div id="apiExamples">
+                <h3>1. Create Account</h3>
+                <div class="api-example">POST /api/accounts/create
+Content-Type: application/json
+
+{
+  "phone_id": "my_business",
+  "name": "My Business Account"
+}</div>
+
+                <h3>2. Get QR Code</h3>
+                <div class="api-example">GET /api/accounts/my_business/qr</div>
+
+                <h3>3. Send Message</h3>
+                <div class="api-example">POST /api/v2/send-message
+Content-Type: application/json
+phone_id: my_business
+token: your_account_token
+
+{
+  "to": "1234567890",
+  "message": "Hello from multi-account API!"
+}</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load system status
+        async function loadSystemStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('systemStatus');
+                statusDiv.innerHTML = `
+                    <div><strong>Total Accounts:</strong> ${data.multi_account.total_accounts}</div>
+                    <div><strong>Connected:</strong> ${data.multi_account.connected_accounts}</div>
+                    <div><strong>Pending:</strong> ${data.multi_account.pending_accounts}</div>
+                    <div><strong>Legacy Client:</strong> <span class="status-badge ${data.legacy_client.ready ? 'status-connected' : 'status-pending'}">${data.legacy_client.ready ? 'Connected' : 'Pending'}</span></div>
+                `;
+            } catch (error) {
+                console.error('Error loading system status:', error);
+                document.getElementById('systemStatus').innerHTML = '<div style="color: red;">Error loading status</div>';
+            }
+        }
+
+        // Load accounts list
+        async function loadAccounts() {
+            try {
+                const response = await fetch('/api/accounts');
+                const data = await response.json();
+                
+                const accountsList = document.getElementById('accountsList');
+                
+                if (data.accounts.length === 0) {
+                    accountsList.innerHTML = '<div>No accounts created yet. Create your first account above!</div>';
+                    return;
+                }
+                
+                accountsList.innerHTML = data.accounts.map(account => `
+                    <div class="account-card ${account.status}">
+                        <div style="display: flex; justify-content: between; align-items: center;">
+                            <div>
+                                <h3>${account.name || account.phone_id}</h3>
+                                <div><strong>Phone ID:</strong> ${account.phone_id}</div>
+                                <div><strong>Phone Number:</strong> ${account.phone_number || 'Not authenticated'}</div>
+                                <div><strong>Status:</strong> <span class="status-badge status-${account.status}">${account.status.toUpperCase()}</span></div>
+                                <div><strong>Last Activity:</strong> ${account.last_activity ? new Date(account.last_activity).toLocaleString() : 'Never'}</div>
+                                <div><strong>Session Ready:</strong> ${account.session.ready ? '✅' : '❌'}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <button class="btn btn-primary" onclick="showQR('${account.phone_id}')">📱 QR Code</button>
+                                <button class="btn btn-warning" onclick="restartAccount('${account.phone_id}')">🔄 Restart</button>
+                                <button class="btn btn-danger" onclick="deleteAccount('${account.phone_id}')">🗑️ Delete</button>
+                            </div>
+                        </div>
+                        <div id="qr-${account.phone_id}" class="hidden">
+                            <div id="qr-content-${account.phone_id}">Loading QR code...</div>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <details>
+                                <summary>API Usage for this account</summary>
+                                <div class="api-example">Headers for API calls:
+phone_id: ${account.phone_id}
+token: ${account.id ? '[Get from account creation response]' : 'Account token here'}
+
+Example:
+curl -X POST http://localhost:3000/api/v2/send-message \\
+  -H "Content-Type: application/json" \\
+  -H "phone_id: ${account.phone_id}" \\
+  -H "token: YOUR_TOKEN_HERE" \\
+  -d '{"to": "1234567890", "message": "Hello!"}'</div>
+                            </details>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading accounts:', error);
+                document.getElementById('accountsList').innerHTML = '<div style="color: red;">Error loading accounts</div>';
+            }
+        }
+
+        // Show QR code for account
+        async function showQR(phoneId) {
+            const qrDiv = document.getElementById(`qr-${phoneId}`);
+            const qrContent = document.getElementById(`qr-content-${phoneId}`);
+            
+            if (qrDiv.classList.contains('hidden')) {
+                qrDiv.classList.remove('hidden');
+                qrContent.innerHTML = 'Loading QR code...';
+                
+                try {
+                    const response = await fetch(`/api/accounts/${phoneId}/qr`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.qr_code) {
+                        qrContent.innerHTML = `
+                            <div>
+                                <p>📱 Scan this QR code with WhatsApp:</p>
+                                <img src="${data.qr_code}" alt="QR Code" class="qr-code">
+                                <p><small>Status: ${data.status}</small></p>
+                            </div>
+                        `;
+                    } else if (data.authenticated) {
+                        qrContent.innerHTML = `
+                            <div style="color: green;">
+                                ✅ Account is already authenticated!<br>
+                                Phone: ${data.phone_number || 'Unknown'}
+                            </div>
+                        `;
+                    } else {
+                        qrContent.innerHTML = `<div style="color: orange;">⏳ ${data.message}</div>`;
+                    }
+                } catch (error) {
+                    qrContent.innerHTML = `<div style="color: red;">❌ Error loading QR code: ${error.message}</div>`;
+                }
+            } else {
+                qrDiv.classList.add('hidden');
+            }
+        }
+
+        // Restart account
+        async function restartAccount(phoneId) {
+            if (!confirm(`Are you sure you want to restart the session for ${phoneId}?`)) return;
+            
+            try {
+                const response = await fetch(`/api/accounts/${phoneId}/restart`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Account restarted successfully!');
+                    loadAccounts();
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            } catch (error) {
+                alert(`Error restarting account: ${error.message}`);
+            }
+        }
+
+        // Delete account
+        async function deleteAccount(phoneId) {
+            if (!confirm(`Are you sure you want to DELETE the account ${phoneId}? This action cannot be undone.`)) return;
+            
+            try {
+                const response = await fetch(`/api/accounts/${phoneId}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Account deleted successfully!');
+                    loadAccounts();
+                    loadSystemStatus();
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            } catch (error) {
+                alert(`Error deleting account: ${error.message}`);
+            }
+        }
+
+        // Create account form submission
+        document.getElementById('createAccountForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const accountData = {
+                phone_id: formData.get('phoneId'),
+                name: formData.get('accountName'),
+                webhook_url: formData.get('webhookUrl')
+            };
+            
+            // Remove empty fields
+            Object.keys(accountData).forEach(key => {
+                if (!accountData[key]) delete accountData[key];
+            });
+            
+            try {
+                const response = await fetch('/api/accounts/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(accountData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`Account created successfully!\n\nPhone ID: ${data.account.phone_id}\nToken: ${data.account.token}\n\nSave the token - you'll need it for API calls!`);
+                    e.target.reset();
+                    loadAccounts();
+                    loadSystemStatus();
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            } catch (error) {
+                alert(`Error creating account: ${error.message}`);
+            }
+        });
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            loadSystemStatus();
+            loadAccounts();
+        }, 30000);
+
+        // Initial load
+        loadSystemStatus();
+        loadAccounts();
+    </script>
+</body>
+</html>

@@ -3,69 +3,331 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Send Location</title>
+  <title>Send Location - Multi-Phone</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet" />
   <link rel="stylesheet" href="assets/styles/app.css" />
 </head>
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark bg-success">
     <div class="container">
-      <a class="navbar-brand" href="index.html">WA Automation</a>
+      <a class="navbar-brand" href="index.html">
+        <i class="fas fa-robot me-2"></i>WA Automation
+      </a>
+      <div class="navbar-nav ms-auto">
+        <a href="account.html" class="nav-link">
+          <i class="fas fa-users me-1"></i>Accounts
+        </a>
+      </div>
     </div>
   </nav>
   <main class="container py-4">
-    <div class="page-header">
-      <h1 class="h4 mb-0">Send Location</h1>
-      <a href="index.html" class="subtle-link">&larr; Back</a>
+    <div class="page-header mb-4">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="h4 mb-1">
+            <i class="fas fa-map-marker-alt me-2 text-primary"></i>Send Location
+          </h1>
+          <p class="text-muted small mb-0">Share GPS coordinates across multiple WhatsApp accounts</p>
+        </div>
+        <a href="index.html" class="btn btn-outline-secondary btn-sm">
+          <i class="fas fa-arrow-left me-1"></i>Back
+        </a>
+      </div>
+    </div>
+
+    <!-- Account Selection -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card bg-light border">
+          <div class="card-body py-3">
+            <div class="row align-items-center">
+              <div class="col-md-6">
+                <label class="form-label mb-2">
+                  <strong><i class="fas fa-mobile-alt me-2"></i>Select WhatsApp Account</strong>
+                </label>
+                <select class="form-select" id="phoneSelector" onchange="onAccountSelect()">
+                  <option value="">Loading accounts...</option>
+                </select>
+              </div>
+              <div class="col-md-6" id="legacyMode" style="display: none;">
+                <div class="form-check form-switch mt-4">
+                  <input class="form-check-input" type="checkbox" id="legacyToggle" onchange="toggleLegacyMode()">
+                  <label class="form-check-label" for="legacyToggle">
+                    <strong>Legacy Mode</strong>
+                    <br><small class="text-muted">Use default WhatsApp connection</small>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="alert alert-warning mt-3 mb-0" id="accountWarning" style="display: none;">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              <strong>No accounts found!</strong> Please <a href="account.html">create an account</a> or enable Legacy Mode.
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="row g-4">
       <div class="col-lg-6">
-        <div class="card h-100"><div class="card-body">
-          <form id="locForm" class="needs-validation" novalidate>
-            <div class="mb-3">
-              <label class="form-label">Recipient <span class="required">*</span></label>
-              <input type="text" class="form-control" name="to" required placeholder="15551234567" />
-              <div class="invalid-feedback">Recipient required.</div>
+        <div class="card h-100">
+          <div class="card-header bg-primary text-white">
+            <h6 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Location Details</h6>
+          </div>
+          <div class="card-body">
+            <div class="mb-3" id="selectedAccountInfo" style="display: none;">
+              <div class="alert alert-info">
+                <strong>Sending from:</strong> <span id="selectedAccountName"></span>
+                <br><small>Phone ID: <code id="selectedPhoneId"></code></small>
+              </div>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Latitude <span class="required">*</span></label>
-              <input type="number" step="any" class="form-control" name="latitude" required />
-              <div class="invalid-feedback">Latitude required.</div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Longitude <span class="required">*</span></label>
-              <input type="number" step="any" class="form-control" name="longitude" required />
-              <div class="invalid-feedback">Longitude required.</div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Description</label>
-              <input type="text" class="form-control" name="description" placeholder="Optional description" />
-            </div>
-            <div class="d-flex align-items-center gap-2">
-              <button class="btn btn-whatsapp" type="submit"><i class="fas fa-location-arrow me-1"></i>Send</button>
-              <div id="spinner" class="spinner-border spinner-border-sm text-success d-none" role="status"></div>
-            </div>
-          </form>
-        </div></div>
+
+            <form id="locForm" class="needs-validation" novalidate>
+              <div class="mb-3">
+                <label class="form-label">Recipient Number <span class="required">*</span></label>
+                <input type="text" class="form-control" name="to" required placeholder="15551234567" />
+                <div class="form-text">Include country code without + sign</div>
+                <div class="invalid-feedback">Recipient required.</div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Latitude <span class="required">*</span></label>
+                <input type="number" step="any" class="form-control" name="latitude" required />
+                <div class="invalid-feedback">Latitude required.</div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Longitude <span class="required">*</span></label>
+                <input type="number" step="any" class="form-control" name="longitude" required />
+                <div class="invalid-feedback">Longitude required.</div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Description</label>
+                <input type="text" class="form-control" name="description" placeholder="Optional description" />
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-whatsapp" type="submit" id="sendBtn" disabled><i class="fas fa-location-arrow me-1"></i>Send Location</button>
+                <div id="spinner" class="spinner-border spinner-border-sm text-success d-none" role="status"></div>
+                <small class="text-muted ms-auto" id="locHint">Select an account first</small>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
       <div class="col-lg-6">
-        <div class="card h-100"><div class="card-header bg-white"><strong>Result</strong></div><div class="card-body"><pre id="result" class="small text-muted mb-0" style="white-space:pre-wrap"></pre></div></div>
+        <div class="card h-100">
+          <div class="card-header bg-secondary text-white"><h6 class="mb-0"><i class="fas fa-terminal me-2"></i>Response</h6></div>
+          <div class="card-body"><pre id="result" class="small text-muted mb-0" style="white-space:pre-wrap; max-height:400px; overflow-y:auto;">Ready to send locations. Select an account and enter coordinates.</pre></div>
+        </div>
       </div>
     </div>
   </main>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js" defer></script>
   <script>
-    const locForm=document.getElementById('locForm');
-    locForm.addEventListener('submit',async e=>{
-      e.preventDefault();
-      if(!locForm.checkValidity()){locForm.classList.add('was-validated');return;}
-      const spinner=document.getElementById('spinner');spinner.classList.remove('d-none');
-      try{
-        const payload={to:locForm.to.value.trim(),latitude:parseFloat(locForm.latitude.value),longitude:parseFloat(locForm.longitude.value),description:locForm.description.value.trim()};
-        const res=await fetch('/send-location',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-        document.getElementById('result').textContent=await res.text();
-      }catch(err){document.getElementById('result').textContent='Error: '+err.message;}finally{spinner.classList.add('d-none');}
+    let accounts = [];
+    let selectedAccount = null;
+    let isLegacyMode = false;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      loadAccounts();
+      setupFormValidation();
+      
+      // Add input listeners for coordinates
+      document.querySelector('input[name="latitude"]').addEventListener('input', updateSendButton);
+      document.querySelector('input[name="longitude"]').addEventListener('input', updateSendButton);
     });
+
+    async function loadAccounts() {
+      const phoneSelector = document.getElementById('phoneSelector');
+      const accountWarning = document.getElementById('accountWarning');
+      const legacyMode = document.getElementById('legacyMode');
+      
+      try {
+        phoneSelector.innerHTML = '<option value="">Loading accounts...</option>';
+        
+        const response = await fetch('/api/accounts');
+        if (response.ok) {
+          const data = await response.json();
+          accounts = data.accounts || data; // Handle both response formats
+          
+          phoneSelector.innerHTML = '<option value="">Select an account...</option>';
+          
+          if (accounts.length === 0) {
+            phoneSelector.innerHTML = '<option value="">No accounts found</option>';
+            accountWarning.style.display = 'block';
+            legacyMode.style.display = 'block';
+          } else {
+            accounts.forEach(account => {
+              const option = document.createElement('option');
+              option.value = account.phone_id;
+              option.textContent = `${account.name || account.phone_id} (${account.phone_id})`;
+              option.setAttribute('data-token', account.token);
+              option.setAttribute('data-status', account.status);
+              phoneSelector.appendChild(option);
+            });
+            accountWarning.style.display = 'none';
+            legacyMode.style.display = 'none';
+          }
+        } else {
+          throw new Error('Failed to load accounts');
+        }
+      } catch (error) {
+        console.error('Error loading accounts:', error);
+        phoneSelector.innerHTML = '<option value="">Error loading accounts</option>';
+        accountWarning.style.display = 'block';
+        legacyMode.style.display = 'block';
+        
+        // Show legacy mode as fallback
+        document.getElementById('legacyToggle').checked = true;
+        toggleLegacyMode();
+      }
+    }
+
+    function onAccountSelect() {
+      const phoneSelector = document.getElementById('phoneSelector');
+      const selectedOption = phoneSelector.options[phoneSelector.selectedIndex];
+      const sendBtn = document.getElementById('sendBtn');
+      const locHint = document.getElementById('locHint');
+      const selectedAccountInfo = document.getElementById('selectedAccountInfo');
+      const selectedAccountName = document.getElementById('selectedAccountName');
+      const selectedPhoneId = document.getElementById('selectedPhoneId');
+      
+      if (phoneSelector.value && selectedOption.dataset.token) {
+        selectedAccount = {
+          phone_id: phoneSelector.value,
+          token: selectedOption.dataset.token,
+          name: selectedOption.textContent,
+          status: selectedOption.dataset.status
+        };
+        
+        // Show selected account info
+        selectedAccountName.textContent = selectedAccount.name;
+        selectedPhoneId.textContent = selectedAccount.phone_id;
+        selectedAccountInfo.style.display = 'block';
+        
+        // Update send button based on coordinates
+        updateSendButton();
+      } else {
+        selectedAccount = null;
+        selectedAccountInfo.style.display = 'none';
+        sendBtn.disabled = true;
+        locHint.textContent = 'Select an account first';
+      }
+    }
+
+    function toggleLegacyMode() {
+      const toggle = document.getElementById('legacyToggle');
+      const phoneSelector = document.getElementById('phoneSelector');
+      const selectedAccountInfo = document.getElementById('selectedAccountInfo');
+      
+      isLegacyMode = toggle.checked;
+      
+      if (isLegacyMode) {
+        phoneSelector.disabled = true;
+        selectedAccountInfo.style.display = 'none';
+        selectedAccount = null;
+      } else {
+        phoneSelector.disabled = false;
+        onAccountSelect();
+      }
+      
+      updateSendButton();
+    }
+
+    function updateSendButton() {
+      const sendBtn = document.getElementById('sendBtn');
+      const locHint = document.getElementById('locHint');
+      const lat = document.querySelector('input[name="latitude"]').value;
+      const lon = document.querySelector('input[name="longitude"]').value;
+      
+      const hasCoords = lat && lon;
+      const hasAccount = isLegacyMode || selectedAccount;
+      
+      if (hasCoords && hasAccount) {
+        sendBtn.disabled = false;
+        locHint.textContent = isLegacyMode ? 'Ready to send (Legacy Mode)' : 'Ready to send';
+      } else if (!hasCoords) {
+        sendBtn.disabled = true;
+        locHint.textContent = 'Enter coordinates to continue';
+      } else if (!hasAccount) {
+        sendBtn.disabled = true;
+        locHint.textContent = 'Select an account first';
+      }
+    }
+
+    function setupFormValidation() {
+      const form = document.getElementById('locForm');
+      form.addEventListener('submit', handleSubmit);
+    }
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+      const form = e.target;
+      const sendBtn = document.getElementById('sendBtn');
+      const spinner = document.getElementById('spinner');
+      const result = document.getElementById('result');
+
+      if (!form.checkValidity()) {
+        form.classList.add('was-validated');
+        return;
+      }
+
+      // Validate coords
+      const lat = parseFloat(form.latitude.value);
+      const lon = parseFloat(form.longitude.value);
+      if (isNaN(lat) || isNaN(lon)) {
+        result.textContent = 'Error: Invalid coordinates.';
+        result.className = 'small text-danger mb-0';
+        return;
+      }
+
+      // Validate account selection
+      if (!isLegacyMode && !selectedAccount) {
+        result.textContent = 'Error: Please select an account or enable legacy mode.';
+        result.className = 'small text-danger mb-0';
+        return;
+      }
+
+      sendBtn.disabled = true;
+      spinner.classList.remove('d-none');
+      result.textContent = 'Sending location...';
+      result.className = 'small text-info mb-0';
+
+      try {
+        const payload = {
+          to: form.to.value.trim(),
+          latitude: lat,
+          longitude: lon,
+          description: form.description.value.trim()
+        };
+
+        let endpoint = '/send-location';
+        let headers = { 'Content-Type': 'application/json' };
+        if (!isLegacyMode) {
+          endpoint = '/api/v2/send-location';
+          headers['phone-id'] = selectedAccount.phone_id;
+          headers['token'] = selectedAccount.token;
+        }
+
+        const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload) });
+        if (res.ok) {
+          const data = await res.json();
+          result.textContent = JSON.stringify(data, null, 2);
+          result.className = 'small text-success mb-0';
+          form.reset();
+          document.getElementById('selectedAccountInfo').style.display = 'none';
+        } else {
+          const txt = await res.text();
+          result.textContent = `Error: ${txt}`;
+          result.className = 'small text-danger mb-0';
+        }
+      } catch (err) {
+        console.error(err);
+        result.textContent = `Error: ${err.message}`;
+        result.className = 'small text-danger mb-0';
+      } finally {
+        sendBtn.disabled = false;
+        spinner.classList.add('d-none');
+      }
+    }
   </script>
 </body>
 </html>

@@ -3,53 +3,194 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Send File by URL</title>
+  <title>Send File by URL - Multi-Phone</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet" />
   <link rel="stylesheet" href="assets/styles/app.css" />
 </head>
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark bg-success">
     <div class="container">
-      <a class="navbar-brand" href="index.html">WA Automation</a>
+      <a class="navbar-brand" href="index.html">
+        <i class="fas fa-robot me-2"></i>WA Automation
+      </a>
+      <div class="navbar-nav ms-auto">
+        <a href="account.html" class="nav-link">
+          <i class="fas fa-users me-1"></i>Accounts
+        </a>
+      </div>
     </div>
   </nav>
   <main class="container py-4">
-    <div class="page-header">
-      <h1 class="h4 mb-0">Send File by URL</h1>
-      <a href="index.html" class="subtle-link">&larr; Back</a>
+    <div class="page-header mb-4">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="h4 mb-1">
+            <i class="fas fa-link me-2 text-primary"></i>Send File by URL
+          </h1>
+          <p class="text-muted small mb-0">Share files from web URLs across multiple WhatsApp accounts</p>
+        </div>
+        <a href="index.html" class="btn btn-outline-secondary btn-sm">
+          <i class="fas fa-arrow-left me-1"></i>Back
+        </a>
+      </div>
+    </div>
+
+    <!-- Account Selection -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card bg-light border">
+          <div class="card-body py-3">
+            <div class="row align-items-center">
+              <div class="col-md-6">
+                <label class="form-label mb-2">
+                  <strong><i class="fas fa-mobile-alt me-2"></i>Select WhatsApp Account</strong>
+                </label>
+                <select class="form-select" id="phoneSelector" onchange="onAccountSelect()">
+                  <option value="">Loading accounts...</option>
+                </select>
+              </div>
+              <div class="col-md-6" id="legacyMode" style="display: none;">
+                <div class="form-check form-switch mt-4">
+                  <input class="form-check-input" type="checkbox" id="legacyToggle" onchange="toggleLegacyMode()">
+                  <label class="form-check-label" for="legacyToggle">
+                    <strong>Legacy Mode</strong>
+                    <br><small class="text-muted">Use default WhatsApp connection</small>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="alert alert-warning mt-3 mb-0" id="accountWarning" style="display: none;">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              <strong>No accounts found!</strong> Please <a href="account.html">create an account</a> or enable Legacy Mode.
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="row g-4">
       <div class="col-lg-6">
         <div class="card h-100">
+          <div class="card-header bg-primary text-white">
+            <h6 class="mb-0">
+              <i class="fas fa-link me-2"></i>File URL Setup
+            </h6>
+          </div>
           <div class="card-body">
+            <!-- Selected Account Display -->
+            <div class="mb-3" id="selectedAccountInfo" style="display: none;">
+              <div class="alert alert-info">
+                <strong>Sending from:</strong> <span id="selectedAccountName"></span>
+                <br><small>Phone ID: <code id="selectedPhoneId"></code></small>
+              </div>
+            </div>
+
             <form id="urlForm" class="needs-validation" novalidate>
               <div class="mb-3">
-                <label class="form-label">Recipient <span class="required">*</span></label>
+                <label class="form-label">Recipient Number <span class="required">*</span></label>
                 <input type="text" class="form-control" name="to" placeholder="15551234567" required />
+                <div class="form-text">Include country code without + sign</div>
                 <div class="invalid-feedback">Recipient required.</div>
               </div>
+
               <div class="mb-3">
                 <label class="form-label">File URL <span class="required">*</span></label>
-                <input type="url" class="form-control" name="url" placeholder="https://example.com/file.pdf" required />
+                <input type="url" class="form-control" name="url" placeholder="https://example.com/document.pdf" required />
                 <div class="invalid-feedback">Valid URL required.</div>
+                <div class="form-text">
+                  <i class="fas fa-info-circle me-1"></i>
+                  Direct link to file (PDF, images, videos, documents)
+                </div>
               </div>
+
               <div class="mb-3">
-                <label class="form-label">Caption</label>
-                <input type="text" class="form-control" name="caption" placeholder="Optional caption" />
+                <label class="form-label">Caption/Message</label>
+                <textarea class="form-control" name="caption" rows="3" placeholder="Optional caption or message to accompany the file"></textarea>
+                <div class="form-text">Add a message to go with your shared file</div>
               </div>
+
+              <div class="mb-3 d-none" id="urlPreviewWrapper">
+                <label class="form-label mb-1">URL Preview</label>
+                <div id="urlPreview" class="border rounded p-3 bg-light">
+                  <div class="text-muted small">URL preview will appear here</div>
+                </div>
+              </div>
+
               <div class="d-flex align-items-center gap-2">
-                <button class="btn btn-whatsapp" type="submit"><i class="fas fa-paper-plane me-1"></i>Send</button>
+                <button class="btn btn-whatsapp" type="submit" id="sendBtn" disabled>
+                  <i class="fas fa-paper-plane me-1"></i>Send File URL
+                </button>
                 <div id="spinner" class="spinner-border spinner-border-sm text-success d-none" role="status"></div>
+                <small class="text-muted ms-auto" id="urlHint">Select an account first</small>
               </div>
             </form>
           </div>
         </div>
       </div>
+
       <div class="col-lg-6">
         <div class="card h-100">
-          <div class="card-header bg-white"><strong>Result</strong></div>
+          <div class="card-header bg-secondary text-white">
+            <h6 class="mb-0">
+              <i class="fas fa-terminal me-2"></i>Response & Status
+            </h6>
+          </div>
           <div class="card-body">
-            <pre id="result" class="small text-muted mb-0" style="white-space:pre-wrap"></pre>
+            <pre id="result" class="small text-muted mb-0" style="white-space:pre-wrap; max-height: 400px; overflow-y: auto;">
+Ready to send file URLs. Select an account and enter a file URL.
+            </pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- URL Guide -->
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header bg-info text-white">
+            <h6 class="mb-0">
+              <i class="fas fa-question-circle me-2"></i>URL Sharing Guidelines
+            </h6>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-3">
+                <div class="text-center">
+                  <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                  <h6>Valid URLs</h6>
+                  <small class="text-muted">Direct file links<br>Public access required</small>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="text-center">
+                  <i class="fas fa-file-alt fa-2x text-primary mb-2"></i>
+                  <h6>File Types</h6>
+                  <small class="text-muted">PDF, Images, Videos<br>Documents, Audio</small>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="text-center">
+                  <i class="fas fa-shield-alt fa-2x text-warning mb-2"></i>
+                  <h6>Security</h6>
+                  <small class="text-muted">HTTPS preferred<br>Trusted sources only</small>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="text-center">
+                  <i class="fas fa-clock fa-2x text-info mb-2"></i>
+                  <h6>Accessibility</h6>
+                  <small class="text-muted">24/7 available<br>No authentication</small>
+                </div>
+              </div>
+            </div>
+            <hr>
+            <div class="small text-muted">
+              <strong>Examples of valid URLs:</strong><br>
+              • https://example.com/document.pdf<br>
+              • https://drive.google.com/uc?id=FILE_ID<br>
+              • https://cdn.example.com/image.jpg
+            </div>
           </div>
         </div>
       </div>
@@ -57,17 +198,319 @@
   </main>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js" defer></script>
   <script>
-    const form=document.getElementById('urlForm');
-    form.addEventListener('submit',async e=>{
-      e.preventDefault();
-      if(!form.checkValidity()){form.classList.add('was-validated');return;}
-      const spinner=document.getElementById('spinner');spinner.classList.remove('d-none');
-      try{
-        const payload={to:form.to.value.trim(),url:form.url.value.trim(),caption:form.caption.value.trim()};
-        const res=await fetch('/send-file-by-url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-        document.getElementById('result').textContent=await res.text();
-      }catch(err){document.getElementById('result').textContent='Error: '+err.message;}finally{spinner.classList.add('d-none');}
+    let accounts = [];
+    let selectedAccount = null;
+    let isLegacyMode = false;
+
+    // Load accounts on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadAccounts();
+      setupUrlPreview();
+      setupFormValidation();
     });
+
+    async function loadAccounts() {
+      const phoneSelector = document.getElementById('phoneSelector');
+      const accountWarning = document.getElementById('accountWarning');
+      const legacyMode = document.getElementById('legacyMode');
+      
+      try {
+        phoneSelector.innerHTML = '<option value="">Loading accounts...</option>';
+        
+        const response = await fetch('/api/accounts');
+        if (response.ok) {
+          const data = await response.json();
+          accounts = data.accounts || data; // Handle both response formats
+          
+          phoneSelector.innerHTML = '<option value="">Select an account...</option>';
+          
+          if (accounts.length === 0) {
+            phoneSelector.innerHTML = '<option value="">No accounts found</option>';
+            accountWarning.style.display = 'block';
+            legacyMode.style.display = 'block';
+          } else {
+            accounts.forEach(account => {
+              const option = document.createElement('option');
+              option.value = account.phone_id;
+              option.textContent = `${account.name} (${account.phone_id})`;
+              option.setAttribute('data-token', account.token);
+              option.setAttribute('data-status', account.status);
+              phoneSelector.appendChild(option);
+            });
+            accountWarning.style.display = 'none';
+            legacyMode.style.display = 'none';
+          }
+        } else {
+          throw new Error('Failed to load accounts');
+        }
+      } catch (error) {
+        console.error('Error loading accounts:', error);
+        phoneSelector.innerHTML = '<option value="">Error loading accounts</option>';
+        accountWarning.style.display = 'block';
+        legacyMode.style.display = 'block';
+        
+        // Show legacy mode as fallback
+        document.getElementById('legacyToggle').checked = true;
+        toggleLegacyMode();
+      }
+    }
+
+    function onAccountSelect() {
+      const phoneSelector = document.getElementById('phoneSelector');
+      const selectedOption = phoneSelector.options[phoneSelector.selectedIndex];
+      const sendBtn = document.getElementById('sendBtn');
+      const urlHint = document.getElementById('urlHint');
+      const selectedAccountInfo = document.getElementById('selectedAccountInfo');
+      const selectedAccountName = document.getElementById('selectedAccountName');
+      const selectedPhoneId = document.getElementById('selectedPhoneId');
+      
+      if (phoneSelector.value && selectedOption.dataset.token) {
+        selectedAccount = {
+          phone_id: phoneSelector.value,
+          token: selectedOption.dataset.token,
+          name: selectedOption.textContent,
+          status: selectedOption.dataset.status
+        };
+        
+        // Show selected account info
+        selectedAccountName.textContent = selectedAccount.name;
+        selectedPhoneId.textContent = selectedAccount.phone_id;
+        selectedAccountInfo.style.display = 'block';
+        
+        // Enable send button if URL is also entered
+        const urlInput = document.querySelector('input[name="url"]');
+        if (urlInput.value.trim()) {
+          sendBtn.disabled = false;
+          urlHint.textContent = 'Ready to send';
+        } else {
+          sendBtn.disabled = true;
+          urlHint.textContent = 'Enter a file URL to continue';
+        }
+      } else {
+        selectedAccount = null;
+        selectedAccountInfo.style.display = 'none';
+        sendBtn.disabled = true;
+        urlHint.textContent = 'Select an account first';
+      }
+    }
+
+    function toggleLegacyMode() {
+      const toggle = document.getElementById('legacyToggle');
+      const phoneSelector = document.getElementById('phoneSelector');
+      const selectedAccountInfo = document.getElementById('selectedAccountInfo');
+      const sendBtn = document.getElementById('sendBtn');
+      const urlHint = document.getElementById('urlHint');
+      
+      isLegacyMode = toggle.checked;
+      
+      if (isLegacyMode) {
+        phoneSelector.disabled = true;
+        selectedAccountInfo.style.display = 'none';
+        selectedAccount = null;
+        
+        // Enable send button if URL is entered
+        const urlInput = document.querySelector('input[name="url"]');
+        if (urlInput.value.trim()) {
+          sendBtn.disabled = false;
+          urlHint.textContent = 'Ready to send (Legacy Mode)';
+        } else {
+          sendBtn.disabled = true;
+          urlHint.textContent = 'Enter a file URL to continue (Legacy Mode)';
+        }
+      } else {
+        phoneSelector.disabled = false;
+        sendBtn.disabled = true;
+        urlHint.textContent = 'Select an account first';
+        onAccountSelect();
+      }
+    }
+
+    function setupUrlPreview() {
+      const urlInput = document.querySelector('input[name="url"]');
+      const previewWrapper = document.getElementById('urlPreviewWrapper');
+      const urlPreview = document.getElementById('urlPreview');
+      const sendBtn = document.getElementById('sendBtn');
+      const urlHint = document.getElementById('urlHint');
+      
+      urlInput.addEventListener('input', function(e) {
+        const url = e.target.value.trim();
+        
+        if (url && isValidUrl(url)) {
+          // Show URL preview
+          const urlInfo = `
+            <div class="d-flex align-items-center gap-3">
+              <div class="flex-shrink-0">
+                <i class="fas ${getUrlIcon(url)} fa-2x text-primary"></i>
+              </div>
+              <div class="flex-grow-1">
+                <div class="fw-bold">${getFilenameFromUrl(url)}</div>
+                <div class="text-muted small">
+                  URL: ${url}
+                </div>
+                <div class="text-success small">
+                  <i class="fas fa-check-circle me-1"></i>Valid URL format
+                </div>
+              </div>
+            </div>
+          `;
+          
+          urlPreview.innerHTML = urlInfo;
+          previewWrapper.classList.remove('d-none');
+        } else if (url) {
+          // Show error for invalid URL
+          urlPreview.innerHTML = `
+            <div class="text-danger">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              Invalid URL format. Please enter a valid file URL.
+            </div>
+          `;
+          previewWrapper.classList.remove('d-none');
+        } else {
+          previewWrapper.classList.add('d-none');
+        }
+        
+        updateSendButton();
+      });
+    }
+
+    function updateSendButton() {
+      const urlInput = document.querySelector('input[name="url"]');
+      const sendBtn = document.getElementById('sendBtn');
+      const urlHint = document.getElementById('urlHint');
+      
+      const hasValidUrl = urlInput.value.trim() && isValidUrl(urlInput.value.trim());
+      const hasAccount = isLegacyMode || selectedAccount;
+      
+      if (hasValidUrl && hasAccount) {
+        sendBtn.disabled = false;
+        urlHint.textContent = isLegacyMode ? 'Ready to send (Legacy Mode)' : 'Ready to send';
+      } else if (!hasValidUrl) {
+        sendBtn.disabled = true;
+        urlHint.textContent = 'Enter a valid file URL to continue';
+      } else if (!hasAccount) {
+        sendBtn.disabled = true;
+        urlHint.textContent = 'Select an account first';
+      }
+    }
+
+    function isValidUrl(string) {
+      try {
+        const url = new URL(string);
+        return url.protocol === 'http:' || url.protocol === 'https:';
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function getUrlIcon(url) {
+      const extension = url.split('.').pop().toLowerCase();
+      if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension)) return 'fa-image';
+      if (['mp4', 'avi', 'mov', 'webm'].includes(extension)) return 'fa-video';
+      if (['mp3', 'wav', 'aac', 'ogg'].includes(extension)) return 'fa-music';
+      if (['pdf'].includes(extension)) return 'fa-file-pdf';
+      if (['doc', 'docx'].includes(extension)) return 'fa-file-word';
+      if (['xls', 'xlsx'].includes(extension)) return 'fa-file-excel';
+      return 'fa-link';
+    }
+
+    function getFilenameFromUrl(url) {
+      try {
+        const pathname = new URL(url).pathname;
+        const filename = pathname.split('/').pop();
+        return filename || 'Unknown filename';
+      } catch (_) {
+        return 'Unknown filename';
+      }
+    }
+
+    function setupFormValidation() {
+      const form = document.getElementById('urlForm');
+      form.addEventListener('submit', handleSubmit);
+    }
+
+    async function handleSubmit(event) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const form = event.target;
+      const sendBtn = document.getElementById('sendBtn');
+      const spinner = document.getElementById('spinner');
+      const result = document.getElementById('result');
+
+      if (!form.checkValidity()) {
+        form.classList.add('was-validated');
+        return;
+      }
+
+      // Validate URL
+      const urlInput = document.querySelector('input[name="url"]');
+      if (!urlInput.value.trim() || !isValidUrl(urlInput.value.trim())) {
+        result.textContent = 'Error: Please enter a valid file URL.';
+        result.className = 'small text-danger mb-0';
+        return;
+      }
+
+      // Validate account selection (unless legacy mode)
+      if (!isLegacyMode && !selectedAccount) {
+        result.textContent = 'Error: Please select an account or enable legacy mode.';
+        result.className = 'small text-danger mb-0';
+        return;
+      }
+
+      sendBtn.disabled = true;
+      spinner.classList.remove('d-none');
+      result.textContent = 'Sending file URL...';
+      result.className = 'small text-info mb-0';
+
+      try {
+        const payload = {
+          to: form.to.value.trim(),
+          url: form.url.value.trim(),
+          caption: form.caption.value.trim()
+        };
+
+        // Determine endpoint and headers
+        let endpoint, headers = { 'Content-Type': 'application/json' };
+        
+        if (isLegacyMode) {
+          endpoint = '/send-file-by-url';
+        } else {
+          endpoint = '/api/v2/send-file-by-url';
+          headers['phone-id'] = selectedAccount.phone_id;
+          headers['token'] = selectedAccount.token;
+        }
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          result.textContent = JSON.stringify(data, null, 2);
+          result.className = 'small text-success mb-0';
+          
+          // Reset form on success
+          form.reset();
+          document.getElementById('urlPreviewWrapper').classList.add('d-none');
+          document.getElementById('selectedAccountInfo').style.display = 'none';
+          updateSendButton();
+        } else {
+          const error = await response.text();
+          result.textContent = `Error: ${error}`;
+          result.className = 'small text-danger mb-0';
+        }
+
+      } catch (error) {
+        console.error('Error:', error);
+        result.textContent = `Error: ${error.message}`;
+        result.className = 'small text-danger mb-0';
+      } finally {
+        sendBtn.disabled = false;
+        spinner.classList.add('d-none');
+      }
+    }
   </script>
 </body>
 </html>
