@@ -9,23 +9,51 @@
   <link rel="stylesheet" href="assets/styles/app.css" />
   <style>
     body {
-      background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
+      background: #f8f9fa;
       min-height: 100vh;
+    }
+    
+    .phone-selector {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    .account-option {
+      background: white;
+      border: 2px solid #e9ecef;
+      border-radius: 10px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .account-option:hover {
+      border-color: #25D366;
+      box-shadow: 0 4px 12px rgba(37, 211, 102, 0.15);
+      transform: translateY(-2px);
+    }
+    
+    .account-option.selected {
+      border-color: #25D366;
+      background: linear-gradient(135deg, #e8f5e9 0%, #ffffff 100%);
+      box-shadow: 0 4px 12px rgba(37, 211, 102, 0.2);
     }
     
     .group-card {
       cursor: pointer;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      border-left: 4px solid transparent;
+      border-left: 3px solid transparent;
       background: white;
-      margin-bottom: 8px;
-      border-radius: 0 8px 8px 0;
+      margin-bottom: 0.5rem;
+      border-radius: 0 10px 10px 0;
+      padding: 0.85rem 1rem;
     }
     
     .group-card:hover {
       border-left-color: #25D366;
-      box-shadow: 0 6px 16px rgba(37, 211, 102, 0.15);
-      transform: translateX(8px);
+      box-shadow: 0 4px 12px rgba(37, 211, 102, 0.15);
+      transform: translateX(6px);
       background: #ffffff;
     }
     
@@ -36,7 +64,7 @@
     }
     
     .participant-item {
-      padding: 16px;
+      padding: 0.85rem 1rem;
       border-bottom: 1px solid #e9ecef;
       transition: all 0.2s ease;
       background: white;
@@ -44,8 +72,8 @@
     
     .participant-item:hover {
       background: linear-gradient(90deg, #f8f9fa 0%, #e8f5e9 100%);
-      transform: translateX(4px);
-      padding-left: 20px;
+      transform: translateX(3px);
+      padding-left: 1.2rem;
     }
     
     .participant-item:last-child {
@@ -53,32 +81,32 @@
     }
     
     .admin-badge {
-      font-size: 0.7rem;
-      padding: 3px 10px;
+      font-size: 0.65rem;
+      padding: 3px 8px;
       font-weight: 600;
-      letter-spacing: 0.5px;
-      border-radius: 12px;
+      letter-spacing: 0.3px;
+      border-radius: 10px;
     }
     
     .profile-pic {
-      width: 50px;
-      height: 50px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
       object-fit: cover;
-      border: 3px solid #e8f5e9;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border: 2px solid #e8f5e9;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
       transition: transform 0.2s ease;
     }
     
     .profile-pic:hover {
-      transform: scale(1.1);
+      transform: scale(1.08);
       border-color: #25D366;
     }
     
     .group-stats {
       display: flex;
-      gap: 15px;
-      font-size: 0.8rem;
+      gap: 0.75rem;
+      font-size: 0.75rem;
       color: #6c757d;
       align-items: center;
       flex-wrap: wrap;
@@ -86,43 +114,48 @@
     
     .group-stats i {
       color: #25D366;
+      font-size: 0.7rem;
     }
     
     .search-box {
       position: sticky;
       top: 0;
-      background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+      background: white;
       z-index: 10;
-      padding: 15px;
-      border-bottom: 2px solid #e8f5e9;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      padding: 1rem;
+      border-bottom: 2px solid #e9ecef;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
     }
     
     .search-box input {
-      border-radius: 24px;
+      border-radius: 20px;
       border: 2px solid #e9ecef;
-      padding: 10px 20px;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
       transition: all 0.3s ease;
     }
     
     .search-box input:focus {
       border-color: #25D366;
-      box-shadow: 0 0 0 4px rgba(37, 211, 102, 0.1);
+      box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.1);
     }
     
     .empty-state {
-      padding: 60px 40px;
+      padding: 3rem 2rem;
       text-align: center;
       color: #6c757d;
     }
     
     .empty-state i {
+      font-size: 2.5rem;
       animation: pulse 2s infinite;
+      color: #25D366;
+      opacity: 0.6;
     }
     
     @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 0.3; }
     }
     
     .loading-overlay {
@@ -136,77 +169,116 @@
       align-items: center;
       justify-content: center;
       z-index: 100;
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(3px);
     }
     
     .card {
-      border-radius: 16px;
+      border-radius: 12px;
       border: none;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
       overflow: hidden;
+      background: white;
     }
     
     .card-header {
-      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-      border-bottom: 2px solid #e8f5e9;
-      padding: 20px;
+      background: white;
+      border-bottom: 3px solid #25D366;
+      padding: 1.25rem 1.5rem;
+    }
+    
+    .card-header h5 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 0;
+      color: #2c3e50;
     }
     
     .btn-group-sm .btn {
       transition: all 0.2s ease;
+      font-size: 0.75rem;
+      padding: 0.35rem 0.6rem;
     }
     
     .btn-group-sm .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 6px rgba(0,0,0,0.12);
     }
     
     .group-description-box {
-      background: linear-gradient(135deg, #e3f2fd 0%, #e8f5e9 100%);
-      border-radius: 12px;
-      padding: 16px;
-      margin: 16px;
-      border-left: 4px solid #25D366;
+      background: linear-gradient(135deg, #e8f5e9 0%, #ffffff 100%);
+      border-radius: 10px;
+      padding: 1rem;
+      margin: 1rem;
+      border-left: 3px solid #25D366;
+      font-size: 0.85rem;
     }
     
     .participant-header {
-      background: linear-gradient(90deg, #f8f9fa 0%, #ffffff 100%);
-      padding: 16px;
-      border-bottom: 2px solid #e8f5e9;
+      background: #f8f9fa;
+      padding: 0.85rem 1rem;
+      border-bottom: 2px solid #e9ecef;
       position: sticky;
       top: 0;
       z-index: 5;
     }
     
+    .participant-header h6 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin: 0;
+      color: #2c3e50;
+    }
+    
     .badge {
       font-weight: 600;
-      padding: 6px 12px;
-      border-radius: 20px;
+      padding: 0.35rem 0.65rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
     }
     
     .navbar {
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 0.75rem 0;
+    }
+    
+    .navbar-brand {
+      font-size: 1.1rem !important;
+      font-weight: 700 !important;
+    }
+    
+    .navbar-text {
+      font-size: 0.95rem !important;
     }
     
     .btn {
       border-radius: 8px;
-      font-weight: 500;
-      transition: all 0.3s ease;
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 0.5rem 1rem;
+      transition: all 0.2s ease;
     }
     
     .btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    
+    .btn-sm {
+      font-size: 0.8rem;
+      padding: 0.4rem 0.75rem;
     }
     
     .group-name {
-      font-weight: 600;
+      font-weight: 700;
       color: #2c3e50;
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
     }
     
     .participant-name {
       font-weight: 600;
-      color: #34495e;
+      color: #2c3e50;
+      font-size: 0.9rem;
     }
     
     .unread-badge {
@@ -220,11 +292,11 @@
     
     /* Custom scrollbar */
     ::-webkit-scrollbar {
-      width: 8px;
+      width: 6px;
     }
     
     ::-webkit-scrollbar-track {
-      background: #f1f1f1;
+      background: #f8f9fa;
       border-radius: 10px;
     }
     
@@ -236,25 +308,70 @@
     ::-webkit-scrollbar-thumb:hover {
       background: #128C7E;
     }
+    
+    /* Page header styling */
+    .page-header {
+      background: white;
+      padding: 1.25rem 0;
+      border-bottom: 3px solid #25D366;
+      margin-bottom: 1.5rem;
+    }
+    
+    .page-header h4 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #2c3e50;
+      margin: 0;
+    }
+    
+    .page-header p {
+      font-size: 0.85rem;
+      color: #6c757d;
+      margin: 0.25rem 0 0 0;
+    }
+    
+    /* Improved button group */
+    .action-btn-group {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    
+    /* Modal improvements */
+    .modal-content {
+      border-radius: 12px !important;
+    }
+    
+    .modal-header {
+      border-radius: 12px 12px 0 0 !important;
+    }
   </style>
 </head>
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);">
-    <div class="container">
-      <a class="navbar-brand" href="index.html" style="font-weight: 600; font-size: 1.3rem;">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="index.html">
         <i class="fab fa-whatsapp me-2"></i>WA Automation
       </a>
-      <span class="navbar-text text-white" style="font-size: 1.1rem;">
+      <span class="navbar-text text-white">
         <i class="fas fa-users-cog me-2"></i>Group Management
       </span>
     </div>
   </nav>
 
-  <main class="container-fluid py-4">
+  <main class="container-fluid py-3">
+    <!-- Page Header -->
+    <div class="page-header mb-3">
+      <div class="container-fluid">
+        <h4><i class="fas fa-users-cog me-2"></i>Group Management</h4>
+        <p>Manage your WhatsApp groups, participants, and settings</p>
+      </div>
+    </div>
+
     <!-- Phone Account Selection -->
-    <div class="row mb-4">
+    <div class="row mb-3">
       <div class="col-12">
-        <div class="phone-selector p-4">
+        <div class="phone-selector p-3">
           <h6 class="mb-3">
             <i class="fas fa-mobile-alt me-2"></i>Select WhatsApp Account
           </h6>
@@ -277,9 +394,9 @@
       </div>
     </div>
 
-    <div class="row mb-4">
+    <div class="row mb-3">
       <div class="col">
-        <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);">
+        <div class="card border-0 shadow-sm">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
               <div>

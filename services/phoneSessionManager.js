@@ -328,8 +328,8 @@ class PhoneSessionManager {
                 phone_id: account.phone_id // Add phone_id association
             });
             
-            // Save message with phone_id context
-            await Message.create({
+            // Save or update message with phone_id context
+            await Message.upsert({
                 messageId: msg.id._serialized,
                 from: msg.from,
                 to: msg.to,
@@ -389,9 +389,22 @@ class PhoneSessionManager {
         try {
             const session = this.sessions.get(phoneId);
             if (session) {
-                // Destroy client
+                // Destroy client with error handling
                 if (session.client) {
-                    await session.client.destroy();
+                    try {
+                        // Check if browser page is still open
+                        if (session.client.pupPage && !session.client.pupPage.isClosed()) {
+                            await session.client.logout();
+                        }
+                    } catch (logoutError) {
+                        console.log(`Logout skipped for ${phoneId} (page already closed):`, logoutError.message);
+                    }
+                    
+                    try {
+                        await session.client.destroy();
+                    } catch (destroyError) {
+                        console.log(`Destroy skipped for ${phoneId} (already destroyed):`, destroyError.message);
+                    }
                 }
 
                 // Remove from maps
@@ -410,6 +423,9 @@ class PhoneSessionManager {
             return false;
         } catch (error) {
             console.error(`❌ Error removing session for ${phoneId}:`, error);
+            // Still cleanup maps even on error
+            this.sessions.delete(phoneId);
+            this.qrCodes.delete(phoneId);
             throw error;
         }
     }

@@ -26,7 +26,7 @@ const Message = sequelize.define('Message', {
         allowNull: true
     },
     type: {
-        type: DataTypes.ENUM('text', 'image', 'audio', 'video', 'document', 'sticker', 'location', 'vcard', 'multi_vcard', 'revoked', 'order', 'product', 'unknown', 'chat'),
+        type: DataTypes.ENUM('text', 'image', 'audio', 'video', 'document', 'sticker', 'location', 'vcard', 'multi_vcard', 'revoked', 'order', 'product', 'unknown', 'chat', 'notification_template', 'ptt', 'call_log', 'ciphertext', 'buttons_response', 'template_button_reply'),
         allowNull: false,
         defaultValue: 'text'
     },

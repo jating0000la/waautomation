@@ -8,119 +8,380 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="assets/styles/app.css" />
   <style>
-    body { 
-      background: #f5f5f5; 
-      min-height: 100vh; 
-      padding-bottom: 40px;
+    /* Dashboard-specific professional styling */
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
     }
-    .navbar {
-      background: #25D366 !important;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    
+    /* Enhanced Account Cards */
+    .account-card-compact {
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: none;
+      background: linear-gradient(135deg, #d4f4dd 0%, #c3e6cb 100%);
+      box-shadow: 0 2px 8px rgba(37, 211, 102, 0.15);
+      position: relative;
     }
-    .navbar-brand {
-      font-weight: 600;
-      font-size: 1.3rem;
+    
+    .account-card-compact::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, #25D366 0%, #128C7E 100%);
     }
-    .container.main-container {
+    
+    .account-card-compact:hover {
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: 0 8px 20px rgba(37, 211, 102, 0.2);
+    }
+    
+    .account-card-compact .card-body {
+      padding: 1rem;
+    }
+    
+    .account-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    
+    .account-phone {
+      font-size: 0.75rem;
+      color: #6c757d;
+      font-family: 'Courier New', monospace;
+    }
+    
+    /* Status Indicators with Animation */
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 5px;
+      position: relative;
+    }
+    
+    .status-indicator.connected {
+      background: #28a745;
+      box-shadow: 0 0 0 rgba(40, 167, 69, 0.4);
+      animation: pulse 2s infinite;
+    }
+    
+    .status-indicator.pending {
+      background: #ffc107;
+      animation: blink 1.5s infinite;
+    }
+    
+    .status-indicator.disconnected {
+      background: #dc3545;
+    }
+    
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+      }
+    }
+    
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    
+    /* Feature Cards Enhancement */
+    .feature-card {
+      height: 100%;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      border: none;
       background: white;
-      border-radius: 8px;
-      padding: 30px;
-      margin-top: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      position: relative;
+      overflow: hidden;
     }
-    .page-header {
-      background: #f8f9fa;
-      border-radius: 6px;
-      padding: 25px;
-      margin-bottom: 30px;
+    
+    .feature-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #25D366 0%, #128C7E 100%);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+    
+    .feature-card:hover::after {
+      transform: scaleX(1);
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+    }
+    
+    .feature-card .card-header {
+      background: linear-gradient(135deg, #25D366 0%, #20b358 100%);
+      border: none;
+      padding: 1rem 1.25rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    
+    .feature-card .list-group-item {
+      border: none;
+      border-bottom: 1px solid #f0f0f0;
+      padding: 0.875rem 1.25rem;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .feature-card .list-group-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: #25D366;
+      transform: scaleY(0);
+      transition: transform 0.2s ease;
+    }
+    
+    .feature-card .list-group-item:hover::before {
+      transform: scaleY(1);
+    }
+    
+    .feature-card .list-group-item:hover {
+      background: linear-gradient(90deg, #f8fff9 0%, #ffffff 100%);
+      padding-left: 1.5rem;
+    }
+    
+    /* Stats Summary Enhancement */
+    .stats-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      padding: 0;
+      margin-bottom: 2rem;
+    }
+    
+    .stat-item {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+    
+    .stat-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(37, 211, 102, 0.15);
+      border-color: #25D366;
+    }
+    
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: block;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+      font-size: 0.8rem;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+    
+    .stat-icon {
+      font-size: 1.5rem;
+      color: #25D366;
+      margin-bottom: 0.5rem;
+      opacity: 0.8;
+    }
+    
+    /* WhatsApp Accounts Status Card */
+    .status-card-header {
+      background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+      padding: 1rem 1.25rem;
+      border-radius: 12px 12px 0 0;
+    }
+    
+    .status-overview {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 8px;
+      margin-bottom: 1rem;
       border-left: 4px solid #25D366;
     }
-    .page-header h1 {
-      color: #333;
-      font-weight: 600;
-      margin: 0;
-      font-size: 1.75rem;
+    
+    .overview-stats {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
     }
-    .card {
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      overflow: hidden;
-      transition: box-shadow 0.2s ease;
-      height: 100%;
+    
+    .overview-stat {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
     }
-    .card:hover {
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .card-header {
-      background: #25D366 !important;
-      color: white !important;
-      font-weight: 600;
-      padding: 15px 20px;
+    
+    .overview-stat i {
       font-size: 1rem;
-      border: none !important;
-    }
-    .list-group-item {
-      border: none;
-      border-bottom: 1px solid #e9ecef;
-      padding: 12px 20px;
-      transition: background-color 0.2s ease;
-      cursor: pointer;
-      color: #495057;
-    }
-    .list-group-item:hover {
-      background: #f8f9fa;
       color: #25D366;
     }
-    .list-group-item i {
-      margin-right: 10px;
-      width: 20px;
-      text-align: center;
+    
+    .overview-stat strong {
+      font-size: 1.25rem;
+      color: #2c3e50;
+      font-weight: 700;
+    }
+    
+    .overview-stat span {
       color: #6c757d;
+      font-size: 0.85rem;
     }
-    .list-group-item:hover i {
-      color: #25D366;
+    
+    /* Action Buttons Group */
+    .action-buttons {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
     }
-    .btn-whatsapp {
-      background: #25D366;
-      border: none;
-      color: white;
-      padding: 10px 20px;
+    
+    .action-buttons .btn {
       border-radius: 6px;
-      font-weight: 500;
-      transition: background-color 0.2s ease;
+      padding: 0.4rem 0.75rem;
+      font-weight: 600;
+      font-size: 0.8rem;
+      transition: all 0.2s ease;
     }
-    .btn-whatsapp:hover {
-      background: #128C7E;
-      color: white;
-    }
-    footer {
-      color: #666;
-      padding: 20px;
-      margin-top: 40px;
-    }
-    .icon-box {
-      display: inline-block;
-      width: 36px;
-      height: 36px;
-      background: #25D366;
-      border-radius: 6px;
-      line-height: 36px;
-      text-align: center;
-      color: white;
-      margin-right: 10px;
-    }
-    .account-status-card {
-      transition: all 0.3s ease;
-      border-radius: 12px;
-    }
-    .account-status-card:hover {
+    
+    .action-buttons .btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     }
-    .vr {
-      opacity: 0.3;
-      height: 20px;
+    
+    /* Last Activity Indicator */
+    .last-active {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.7rem;
+      color: #6c757d;
+      margin-top: 0.5rem;
     }
+    
+    .last-active i {
+      color: #6c757d;
+      font-size: 0.7rem;
+    }
+    
+    /* Loading Animation */
+    .loading-shimmer {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+    
+    @keyframes shimmer {
+      0% {
+        background-position: 200% 0;
+      }
+      100% {
+        background-position: -200% 0;
+      }
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .stats-summary {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+      }
+      
+      .stat-item {
+        padding: 1.25rem;
+      }
+      
+      .stat-value {
+        font-size: 2rem;
+      }
+      
+      .overview-stats {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+      
+      .action-buttons {
+        width: 100%;
+      }
+      
+      .action-buttons .btn {
+        flex: 1;
+      }
+      
+      .account-card-compact {
+        margin-bottom: 1rem;
+      }
+    }
+    
+    /* Smooth Scroll */
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    /* Page Load Animation */
+    .fade-in {
+      animation: fadeInUp 0.6s ease-out;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .row > [class*='col-'] {
+      animation: fadeInUp 0.6s ease-out backwards;
+    }
+    
+    .row > [class*='col-']:nth-child(1) { animation-delay: 0.1s; }
+    .row > [class*='col-']:nth-child(2) { animation-delay: 0.2s; }
+    .row > [class*='col-']:nth-child(3) { animation-delay: 0.3s; }
   </style>
 </head>
 <body>
@@ -140,47 +401,19 @@
     </div>
   </nav>
 
-  <div class="container main-container">
-    <!-- Account Status Overview -->
-    <div class="row mb-4">
-      <div class="col-12">
-        <div class="card border-0">
-          <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <i class="fas fa-mobile-alt me-2"></i>WhatsApp Accounts Status
-              </div>
-              <a href="account.html" class="btn btn-sm btn-light">
-                <i class="fas fa-plus me-1"></i>Manage Accounts
-              </a>
-            </div>
-          </div>
-          <div class="card-body">
-            <div id="accountStatusContainer">
-              <div class="text-center py-4">
-                <div class="spinner-border text-primary" role="status">
-                  <span class="visually-hidden">Loading accounts...</span>
-                </div>
-                <p class="mt-2 text-muted">Loading account status...</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
+  <main class="container py-4">
     <div class="page-header">
-      <div class="d-flex justify-content-between align-items-center">
+      <div class="d-flex justify-content-between align-items-center flex-wrap">
         <div>
-          <h1><i class="fas fa-rocket icon-box"></i>Platform Overview</h1>
-          <p class="text-muted mb-0 mt-2">Powerful WhatsApp automation at your fingertips</p>
+          <h1><i class="fas fa-rocket"></i>Platform Overview</h1>
+          <p>Powerful WhatsApp automation at your fingertips</p>
         </div>
-        <div class="d-flex gap-2">
-          <button class="btn btn-outline-primary" onclick="refreshStatus()">
+        <div class="d-flex gap-2 mt-3 mt-md-0">
+          <button class="btn btn-outline-primary btn-sm" onclick="refreshStatus()">
             <i class="fas fa-sync-alt me-1"></i>Refresh
           </button>
           <div class="dropdown">
-            <button class="btn btn-whatsapp dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <button class="btn btn-whatsapp btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
               <i class="fas fa-magic me-1"></i>Quick Actions
             </button>
             <ul class="dropdown-menu">
@@ -195,56 +428,108 @@
       </div>
     </div>
 
-    <div class="row g-4">
-      <div class="col-lg-4">
-        <div class="card">
-          <div class="card-header">
-            <i class="fas fa-comments me-2"></i>Basic Messaging
+    <!-- Account Status Overview -->
+    <div class="row mb-4 fade-in">
+      <div class="col-12">
+        <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+          <div class="status-card-header">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <i class="fas fa-mobile-alt me-2"></i>
+                <span style="font-size: 1.1rem; font-weight: 600;">WhatsApp Accounts</span>
+              </div>
+              <a href="account.html" class="btn btn-light btn-sm">
+                <i class="fas fa-plus me-1"></i>Manage Accounts
+              </a>
+            </div>
           </div>
-          <div class="list-group list-group-flush">
-            <a class="list-group-item" href="send-message.html"><i class="fas fa-comment-dots"></i>Send Message</a>
-            <a class="list-group-item" href="send-media.html"><i class="fas fa-photo-video"></i>Send Media</a>
-            <a class="list-group-item" href="send-file-by-url.html"><i class="fas fa-link"></i>Send File by URL</a>
-            <a class="list-group-item" href="send-location.html"><i class="fas fa-map-marker-alt"></i>Send Location</a>
-            <a class="list-group-item" href="send-contact.html"><i class="fas fa-address-card"></i>Send Contact</a>
-            <a class="list-group-item" href="send-reaction.html"><i class="fas fa-smile"></i>Send Reaction</a>
-            <a class="list-group-item" href="forward-messages.html"><i class="fas fa-share"></i>Forward Messages</a>
-          </div>
-        </div>
-      </div>
-      
-      <div class="col-lg-4">
-        <div class="card">
-          <div class="card-header">
-            <i class="fas fa-users-cog me-2"></i>Groups & Management
-          </div>
-          <div class="list-group list-group-flush">
-            <a class="list-group-item" href="create-group.html"><i class="fas fa-plus-circle"></i>Create Group</a>
-            <a class="list-group-item" href="group-management.html"><i class="fas fa-users"></i>Group Management</a>
-            <a class="list-group-item" href="groups.html"><i class="fas fa-layer-group"></i>View Groups</a>
-            <a class="list-group-item" href="account.html"><i class="fas fa-user-shield"></i>Account & Device</a>
-            <a class="list-group-item" href="calls.html"><i class="fas fa-phone"></i>Calls</a>
-          </div>
-        </div>
-      </div>
-      
-      <div class="col-lg-4">
-        <div class="card">
-          <div class="card-header">
-            <i class="fas fa-tools me-2"></i>System & Tools
-          </div>
-          <div class="list-group list-group-flush">
-            <a class="list-group-item" href="message-logs.html"><i class="fas fa-history"></i>Message Logs</a>
-            <a class="list-group-item" href="database.html"><i class="fas fa-database"></i>Database Management</a>
-            <a class="list-group-item" href="api-keys.html"><i class="fas fa-key"></i>API Key Management</a>
-            <a class="list-group-item" href="api-testing.html"><i class="fas fa-flask"></i>API Testing Console</a>
-            <a class="list-group-item" href="webhook.html"><i class="fas fa-webhook"></i>Webhook</a>
-            <a class="list-group-item" href="statuses.html"><i class="fas fa-chart-pie"></i>Statuses</a>
+          <div class="card-body">
+            <div id="accountStatusContainer">
+              <div class="text-center py-5">
+                <div class="spinner-border text-success" role="status" style="width: 3rem; height: 3rem;">
+                  <span class="visually-hidden">Loading accounts...</span>
+                </div>
+                <p class="mt-3 text-muted fw-medium">Loading account status...</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
+
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="card feature-card">
+          <div class="card-header">
+            <i class="fas fa-comments me-2"></i>Basic Messaging
+          </div>
+          <div class="list-group list-group-flush">
+            <a class="list-group-item" href="send-message.html">
+              <i class="fas fa-comment-dots"></i>Send Message
+            </a>
+            <a class="list-group-item" href="send-media.html">
+              <i class="fas fa-photo-video"></i>Send Media
+            </a>
+            <a class="list-group-item" href="send-file-by-url.html">
+              <i class="fas fa-link"></i>Send File by URL
+            </a>
+            <a class="list-group-item" href="send-location.html">
+              <i class="fas fa-map-marker-alt"></i>Send Location
+            </a>
+            <a class="list-group-item" href="send-contact.html">
+              <i class="fas fa-address-card"></i>Send Contact
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-4">
+        <div class="card feature-card">
+          <div class="card-header">
+            <i class="fas fa-users-cog me-2"></i>Groups & Management
+          </div>
+          <div class="list-group list-group-flush">
+            <a class="list-group-item" href="group-management.html">
+              <i class="fas fa-users"></i>Group Management
+            </a>
+            <a class="list-group-item" href="account.html">
+              <i class="fas fa-user-shield"></i>Account & Device
+            </a>
+            
+            <a class="list-group-item" href="contacts.html">
+              <i class="fas fa-user-shield"></i>Contacts
+            </a>
+
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-4">
+        <div class="card feature-card">
+          <div class="card-header">
+            <i class="fas fa-tools me-2"></i>System & Tools
+          </div>
+          <div class="list-group list-group-flush">
+            <a class="list-group-item" href="message-logs.html">
+              <i class="fas fa-history"></i>Message Logs
+            </a>
+            <a class="list-group-item" href="database.html">
+              <i class="fas fa-database"></i>Database Management
+            </a>
+            <a class="list-group-item" href="api-keys.html">
+              <i class="fas fa-key"></i>API Key Management
+            </a>
+            <a class="list-group-item" href="api-testing.html">
+              <i class="fas fa-flask"></i>API Testing Console
+            </a>
+            <a class="list-group-item" href="webhook.html">
+              <i class="fas fa-webhook"></i>Webhook
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
   
   <footer class="text-center">
     <i class="fab fa-whatsapp me-2"></i>&copy; <span id="year"></span> WhatsApp Automation Platform
@@ -288,12 +573,14 @@
       
       if (accounts.length === 0) {
         container.innerHTML = `
-          <div class="text-center py-4">
-            <i class="fas fa-plus-circle fa-3x text-primary mb-3"></i>
-            <h5>No WhatsApp Accounts</h5>
-            <p class="text-muted mb-3">Get started by adding your first WhatsApp account</p>
-            <a href="account.html" class="btn btn-whatsapp">
-              <i class="fas fa-plus me-2"></i>Add First Account
+          <div class="text-center py-5">
+            <div style="font-size: 4rem; color: #25D366; margin-bottom: 1rem;">
+              <i class="fas fa-mobile-alt"></i>
+            </div>
+            <h4 style="color: #2c3e50; font-weight: 700; margin-bottom: 1rem;">No WhatsApp Accounts</h4>
+            <p class="text-muted mb-4" style="font-size: 1rem;">Get started by adding your first WhatsApp account to begin automation</p>
+            <a href="account.html" class="btn btn-whatsapp btn-lg shadow">
+              <i class="fas fa-plus me-2"></i>Add Your First Account
             </a>
           </div>
         `;
@@ -304,51 +591,62 @@
       const totalCount = accounts.length;
 
       const accountCards = accounts.map(account => {
-        const statusIcon = account.status === 'connected' ? 'fas fa-check-circle text-success' : 'fas fa-clock text-warning';
+        const statusClass = account.status === 'connected' ? 'connected' : 'pending';
         const statusText = account.status === 'connected' ? 'Connected' : 'Pending';
         const lastActive = formatRelativeTime(account.last_activity);
         
         return `
           <div class="col-md-6 col-lg-4 mb-3">
-            <div class="card border-0 h-100" style="background: ${account.status === 'connected' ? 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)' : 'linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%)'};">
+            <div class="card account-card-compact h-100">
               <div class="card-body">
-                <div class="d-flex align-items-start justify-content-between">
+                <div class="d-flex justify-content-between align-items-start mb-3">
                   <div class="flex-grow-1">
-                    <h6 class="card-title mb-1 d-flex align-items-center">
-                      <i class="fas fa-mobile-alt me-2 text-primary"></i>
+                    <div class="account-title">
+                      <i class="fas fa-mobile-alt" style="color: #25D366;"></i>
                       ${escapeHtml(account.name || 'WhatsApp Account')}
-                    </h6>
-                    <p class="card-text small text-muted mb-2">${account.phone_number || account.phone_id}</p>
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                      <span class="badge ${account.status === 'connected' ? 'bg-success' : 'bg-warning'}">
-                        <i class="${statusIcon.split(' ')[1]} me-1"></i>
-                        ${statusText}
-                      </span>
                     </div>
-                    <small class="text-muted">
-                      <i class="fas fa-clock me-1"></i>
-                      Last active: ${lastActive}
-                    </small>
+                    <div class="account-phone">${account.phone_number || account.phone_id}</div>
                   </div>
                   <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <button class="btn btn-sm btn-light rounded-circle" type="button" data-bs-toggle="dropdown" style="width: 32px; height: 32px; padding: 0;">
                       <i class="fas fa-ellipsis-v"></i>
                     </button>
-                    <ul class="dropdown-menu">
+                    <ul class="dropdown-menu dropdown-menu-end">
                       ${account.status === 'connected' 
                         ? `
-                          <li><a class="dropdown-item" href="send-message.html?account=${account.phone_id}"><i class="fas fa-comment me-2"></i>Send Message</a></li>
-                          <li><a class="dropdown-item" href="group-management.html?account=${account.phone_id}"><i class="fas fa-users me-2"></i>Manage Groups</a></li>
+                          <li><a class="dropdown-item" href="send-message.html?account=${account.phone_id}">
+                            <i class="fas fa-comment text-primary me-2"></i>Send Message
+                          </a></li>
+                          <li><a class="dropdown-item" href="group-management.html?account=${account.phone_id}">
+                            <i class="fas fa-users text-info me-2"></i>Manage Groups
+                          </a></li>
                           <li><hr class="dropdown-divider"></li>
                         `
                         : `
-                          <li><a class="dropdown-item" href="account.html?phone_id=${account.phone_id}"><i class="fas fa-qrcode me-2"></i>Show QR Code</a></li>
+                          <li><a class="dropdown-item" href="account.html?phone_id=${account.phone_id}">
+                            <i class="fas fa-qrcode text-warning me-2"></i>Show QR Code
+                          </a></li>
                           <li><hr class="dropdown-divider"></li>
                         `
                       }
-                      <li><a class="dropdown-item" href="account.html?phone_id=${account.phone_id}"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                      <li><a class="dropdown-item" href="account.html?phone_id=${account.phone_id}">
+                        <i class="fas fa-cog text-secondary me-2"></i>Settings
+                      </a></li>
                     </ul>
                   </div>
+                </div>
+                
+                <div class="d-flex align-items-center mb-2">
+                  <span class="status-indicator ${statusClass}"></span>
+                  <span class="badge ${account.status === 'connected' ? 'bg-success' : 'bg-warning'}" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">
+                    <i class="fas ${account.status === 'connected' ? 'fa-check-circle' : 'fa-clock'} me-1"></i>
+                    ${statusText}
+                  </span>
+                </div>
+                
+                <div class="last-active">
+                  <i class="fas fa-clock"></i>
+                  <span>Last active: <strong>${lastActive}</strong></span>
                 </div>
               </div>
             </div>
@@ -357,34 +655,28 @@
       }).join('');
 
       container.innerHTML = `
-        <div class="row mb-3">
-          <div class="col-12">
-            <div class="d-flex align-items-center justify-content-between">
-              <div class="d-flex align-items-center gap-3">
-                <div class="d-flex align-items-center">
-                  <i class="fas fa-signal text-success me-2"></i>
-                  <span class="fw-bold text-success">${connectedCount}</span>
-                  <span class="text-muted ms-1">/ ${totalCount} Connected</span>
-                </div>
-                <div class="vr"></div>
-                <small class="text-muted">
-                  <i class="fas fa-sync-alt me-1"></i>
-                  Last updated: ${new Date().toLocaleTimeString()}
-                </small>
-              </div>
-              <div class="d-flex gap-2">
-                ${connectedCount > 0 ? `
-                  <div class="btn-group btn-group-sm" role="group">
-                    <a href="send-message.html" class="btn btn-outline-success">
-                      <i class="fas fa-comment me-1"></i>Message
-                    </a>
-                    <a href="group-management.html" class="btn btn-outline-primary">
-                      <i class="fas fa-users me-1"></i>Groups
-                    </a>
-                  </div>
-                ` : ''}
+        <div class="status-overview">
+          <div class="overview-stats">
+            <div class="overview-stat">
+              <i class="fas fa-check-circle"></i>
+              <div>
+                <strong>${connectedCount}</strong>
+                <span>/ ${totalCount} Connected</span>
               </div>
             </div>
+          </div>
+          <div class="action-buttons">
+            ${connectedCount > 0 ? `
+              <a href="send-message.html" class="btn btn-success btn-sm">
+                <i class="fas fa-comment me-1"></i>Send Message
+              </a>
+              <a href="group-management.html" class="btn btn-primary btn-sm">
+                <i class="fas fa-users me-1"></i>Manage Groups
+              </a>
+            ` : ''}
+            <button class="btn btn-outline-secondary btn-sm" onclick="loadAccountStatus()">
+              <i class="fas fa-sync-alt me-1"></i>Refresh
+            </button>
           </div>
         </div>
         <div class="row">

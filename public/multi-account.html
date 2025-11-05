@@ -221,41 +221,79 @@ curl -X POST http://localhost:3000/api/v2/send-message \\
         }
 
         // Show QR code for account
-        async function showQR(phoneId) {
+        async function showQR(phoneId, retryCount = 0) {
             const qrDiv = document.getElementById(`qr-${phoneId}`);
             const qrContent = document.getElementById(`qr-content-${phoneId}`);
+            const maxRetries = 10; // Maximum number of retries
             
             if (qrDiv.classList.contains('hidden')) {
                 qrDiv.classList.remove('hidden');
-                qrContent.innerHTML = 'Loading QR code...';
+            }
+            
+            qrContent.innerHTML = '⏳ Loading QR code...';
+            
+            try {
+                const response = await fetch(`/api/accounts/${phoneId}/qr`);
+                const data = await response.json();
                 
-                try {
-                    const response = await fetch(`/api/accounts/${phoneId}/qr`);
-                    const data = await response.json();
-                    
-                    if (data.success && data.qr_code) {
+                if (data.success && data.qr_code) {
+                    qrContent.innerHTML = `
+                        <div>
+                            <p>📱 Scan this QR code with WhatsApp:</p>
+                            <img src="${data.qr_code}" alt="QR Code" class="qr-code">
+                            <p><small>Status: ${data.status}</small></p>
+                            <button class="btn btn-warning btn-sm" onclick="showQR('${phoneId}')">🔄 Refresh QR</button>
+                        </div>
+                    `;
+                } else if (data.authenticated) {
+                    qrContent.innerHTML = `
+                        <div style="color: green;">
+                            ✅ Account is already authenticated!<br>
+                            Phone: ${data.phone_number || 'Unknown'}
+                        </div>
+                    `;
+                } else if (response.status === 202 && data.retry_after) {
+                    // Session is being initialized, retry after delay
+                    if (retryCount < maxRetries) {
+                        const nextRetry = retryCount + 1;
                         qrContent.innerHTML = `
-                            <div>
-                                <p>📱 Scan this QR code with WhatsApp:</p>
-                                <img src="${data.qr_code}" alt="QR Code" class="qr-code">
-                                <p><small>Status: ${data.status}</small></p>
+                            <div style="color: orange;">
+                                🔄 ${data.message}<br>
+                                <small>Attempt ${nextRetry}/${maxRetries} - Retrying in ${data.retry_after} seconds...</small>
+                                <br><br>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" 
+                                         role="progressbar" style="width: ${(nextRetry/maxRetries)*100}%"></div>
+                                </div>
                             </div>
                         `;
-                    } else if (data.authenticated) {
-                        qrContent.innerHTML = `
-                            <div style="color: green;">
-                                ✅ Account is already authenticated!<br>
-                                Phone: ${data.phone_number || 'Unknown'}
-                            </div>
-                        `;
+                        
+                        // Auto-retry after the specified delay
+                        setTimeout(() => {
+                            showQR(phoneId, nextRetry);
+                        }, data.retry_after * 1000);
                     } else {
-                        qrContent.innerHTML = `<div style="color: orange;">⏳ ${data.message}</div>`;
+                        qrContent.innerHTML = `
+                            <div style="color: red;">
+                                ❌ Timeout: QR code generation took too long.<br>
+                                <button class="btn btn-primary" onclick="showQR('${phoneId}', 0)">🔄 Try Again</button>
+                                <button class="btn btn-warning" onclick="restartAccount('${phoneId}')">🔄 Restart Session</button>
+                            </div>
+                        `;
                     }
-                } catch (error) {
-                    qrContent.innerHTML = `<div style="color: red;">❌ Error loading QR code: ${error.message}</div>`;
+                } else {
+                    qrContent.innerHTML = `
+                        <div style="color: orange;">⏳ ${data.message || 'Waiting for QR code...'}</div>
+                        <button class="btn btn-primary" onclick="showQR('${phoneId}', 0)">🔄 Retry</button>
+                    `;
                 }
-            } else {
-                qrDiv.classList.add('hidden');
+            } catch (error) {
+                qrContent.innerHTML = `
+                    <div style="color: red;">
+                        ❌ Error loading QR code: ${error.message}<br>
+                        <button class="btn btn-primary" onclick="showQR('${phoneId}', 0)">🔄 Retry</button>
+                    </div>
+                `;
             }
         }
 

@@ -2,6 +2,8 @@ const express = require('express');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
 const bodyParser = require('body-parser');
+const session = require('express-session');
+const cookieParser = require('cookie-parser');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
@@ -30,6 +32,21 @@ const app = express();
 
 // Apply security headers first
 app.use(securityHeaders);
+
+// Cookie parser middleware
+app.use(cookieParser());
+
+// Session middleware
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { 
+        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+}));
 
 // Apply rate limiting to API routes
 app.use('/api/', apiLimiter);
@@ -168,8 +185,8 @@ client.on('message', async msg => {
             isMuted: chat.isMuted
         });
         
-        // Save message
-        await Message.create({
+        // Save or update message
+        await Message.upsert({
             messageId: msg.id._serialized,
             from: msg.from,
             to: msg.to,
@@ -289,6 +306,68 @@ app.post('/send-reaction', legacyAuthMiddleware, async (req, res) => {
 // Webhook for incoming messages
 app.post('/webhook', (req, res) => {
     res.sendStatus(200);
+});
+
+// ========== Authentication Routes ==========
+// Simple login endpoint for development/testing
+app.post('/auth/login', (req, res) => {
+    const { username, password } = req.body;
+    
+    // Simple authentication - in production, use proper password hashing and user database
+    const validUsername = process.env.ADMIN_USERNAME || 'admin';
+    const validPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    
+    if (username === validUsername && password === validPassword) {
+        req.session.user = {
+            id: '1',
+            username: username,
+            role: 'admin'
+        };
+        
+        res.json({
+            success: true,
+            message: 'Logged in successfully',
+            user: {
+                username: username,
+                role: 'admin'
+            }
+        });
+    } else {
+        res.status(401).json({
+            success: false,
+            error: 'Invalid credentials'
+        });
+    }
+});
+
+// Check authentication status
+app.get('/auth/status', (req, res) => {
+    if (req.session?.user) {
+        res.json({
+            authenticated: true,
+            user: req.session.user
+        });
+    } else {
+        res.json({
+            authenticated: false
+        });
+    }
+});
+
+// Logout endpoint
+app.post('/auth/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to logout'
+            });
+        }
+        res.json({
+            success: true,
+            message: 'Logged out successfully'
+        });
+    });
 });
 
 // Get QR code
@@ -655,14 +734,31 @@ app.post('/account/reboot', async (req, res) => {
 app.post('/account/logout', async (req, res) => {
     try {
         if (client) {
-            await client.logout();
-            await client.destroy();
+            try {
+                // Check if client is still valid before calling logout
+                if (client.pupPage && !client.pupPage.isClosed()) {
+                    await client.logout();
+                }
+            } catch (logoutError) {
+                console.log('Client already closed or logout failed:', logoutError.message);
+            }
+            
+            // Always try to destroy and cleanup
+            try {
+                await client.destroy();
+            } catch (destroyError) {
+                console.log('Client destroy skipped (already destroyed):', destroyError.message);
+            }
+            
             clientReady = false;
             client = null;
         }
         res.send('✅ Logged out successfully. Client destroyed and session cleared.');
     } catch (error) {
         console.error('Logout error:', error);
+        // Still cleanup even if there's an error
+        clientReady = false;
+        client = null;
         res.status(500).send('❌ Error during logout: ' + error.message);
     }
 });
@@ -1047,11 +1143,18 @@ app.post('/read-mark', legacyAuthMiddleware, async (req, res) => {
 });
 
 // --- SERVICE METHODS ---
-app.get('/service/contacts', async (req, res) => {
+app.get('/service/contacts', optionalAuthMiddleware, async (req, res) => {
     try {
+        if (!clientReady) {
+            return res.status(503).json({ 
+                error: 'WhatsApp client not ready',
+                message: 'Please wait for WhatsApp to be connected. Go to /account.html to scan QR code.'
+            });
+        }
         const contacts = await client.getContacts();
         res.json({ contacts });
     } catch (err) {
+        console.error('❌ Error fetching contacts:', err);
         res.status(500).json({ error: err.message });
     }
 });

@@ -8,70 +8,54 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="assets/styles/app.css" />
   <style>
-    .account-card {
-      transition: all 0.3s ease;
-      border-left: 4px solid #dee2e6;
-    }
-    .account-card.status-connected {
-      border-left-color: #28a745;
-      background: linear-gradient(135deg, #f8f9fa 0%, #e8f5e8 100%);
-    }
-    .account-card.status-pending {
-      border-left-color: #ffc107;
-      background: linear-gradient(135deg, #f8f9fa 0%, #fff3cd 100%);
-    }
-    .account-card.status-error {
-      border-left-color: #dc3545;
-      background: linear-gradient(135deg, #f8f9fa 0%, #f8d7da 100%);
-    }
-    .qr-container {
-      max-height: 400px;
-      overflow-y: auto;
-    }
-    .account-actions {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }
-    .btn-xs {
-      padding: 0.25rem 0.5rem;
-      font-size: 0.75rem;
-    }
     .phone-id-input {
       font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
     }
     .legacy-section {
       background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
-      border: 1px solid #2196f3;
-      border-radius: 10px;
+      border: 2px solid #2196f3;
+      border-radius: 12px;
+      padding: 1.5rem;
     }
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+  <nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container">
       <a class="navbar-brand" href="index.html">
-        <i class="fab fa-whatsapp me-2"></i>WA Multi-Account Manager
+        <i class="fab fa-whatsapp me-2"></i>WA Automation
       </a>
-      <div class="navbar-nav ms-auto">
-        <a class="nav-link" href="multi-account.html">
-          <i class="fas fa-users me-1"></i>Multi-Account UI
-        </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="multi-account.html">
+              <i class="fas fa-users me-1"></i>Multi-Account UI
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="index.html">
+              <i class="fas fa-home me-1"></i>Dashboard
+            </a>
+          </li>
+        </ul>
       </div>
     </div>
   </nav>
 
   <main class="container py-4">
-    <div class="page-header mb-4">
-      <div class="d-flex justify-content-between align-items-center">
+    <div class="page-header">
+      <div class="d-flex justify-content-between align-items-center flex-wrap">
         <div>
-          <h1 class="h4 mb-1">
+          <h1>
             <i class="fas fa-mobile-alt me-2"></i>Multi-Phone Account Manager
           </h1>
           <p class="text-muted mb-0">Manage multiple WhatsApp accounts with phone_id-based isolation</p>
         </div>
-        <a href="index.html" class="btn btn-outline-secondary">
-          <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+        <a href="index.html" class="btn btn-outline-secondary mt-2 mt-md-0">
+          <i class="fas fa-arrow-left me-1"></i>Back
         </a>
       </div>
     </div>
@@ -392,14 +376,16 @@ System initialized. Ready to manage WhatsApp accounts.
       await showAccountQR(phoneId);
     }
 
-    async function showAccountQR(phoneId) {
+    async function showAccountQR(phoneId, retryCount = 0) {
       const qrDisplay = document.getElementById('qrDisplay');
+      const maxRetries = 10; // Maximum number of retries
       
       qrDisplay.innerHTML = `
         <div class="text-center">
           <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
           <h5>Loading QR Code</h5>
           <p class="text-muted">Generating QR code for ${phoneId}...</p>
+          ${retryCount > 0 ? `<small class="text-muted">Attempt ${retryCount + 1}/${maxRetries}</small>` : ''}
         </div>
       `;
 
@@ -446,13 +432,61 @@ System initialized. Ready to manage WhatsApp accounts.
           const interval = setInterval(() => refreshAccountQR(phoneId), 30000);
           qrIntervals.set(phoneId, interval);
           
+        } else if (response.status === 202 && data.retry_after) {
+          // Session is being initialized, retry after delay
+          if (retryCount < maxRetries) {
+            const nextRetry = retryCount + 1;
+            const progressPercent = (nextRetry / maxRetries) * 100;
+            
+            qrDisplay.innerHTML = `
+              <div class="text-center text-info">
+                <i class="fas fa-sync-alt fa-spin fa-2x mb-3"></i>
+                <h5>Initializing Session</h5>
+                <p>${data.message || 'Setting up WhatsApp session...'}</p>
+                <small class="text-muted d-block mb-2">Attempt ${nextRetry}/${maxRetries} - Retrying in ${data.retry_after} seconds...</small>
+                <div class="progress" style="height: 8px; max-width: 300px; margin: 0 auto;">
+                  <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" 
+                       role="progressbar" style="width: ${progressPercent}%"></div>
+                </div>
+              </div>
+            `;
+            
+            // Auto-retry after the specified delay
+            setTimeout(() => {
+              showAccountQR(phoneId, nextRetry);
+            }, data.retry_after * 1000);
+          } else {
+            qrDisplay.innerHTML = `
+              <div class="text-center text-danger">
+                <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                <h5>Timeout</h5>
+                <p>QR code generation took too long. The session might need to be restarted.</p>
+                <button class="btn btn-primary me-2" onclick="showAccountQR('${phoneId}', 0)">
+                  <i class="fas fa-retry me-1"></i>Try Again
+                </button>
+                <button class="btn btn-warning" onclick="restartAccount('${phoneId}')">
+                  <i class="fas fa-sync-alt me-1"></i>Restart Session
+                </button>
+              </div>
+            `;
+          }
+          
+        } else if (data.authenticated) {
+          qrDisplay.innerHTML = `
+            <div class="text-center text-success">
+              <i class="fas fa-check-circle fa-2x mb-3"></i>
+              <h5>Already Connected</h5>
+              <p>This account is already authenticated!</p>
+              <p class="text-muted">Phone: ${data.phone_number || 'Unknown'}</p>
+            </div>
+          `;
         } else {
           qrDisplay.innerHTML = `
             <div class="text-center text-warning">
               <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
               <h5>QR Code Not Available</h5>
               <p>${data.message || 'Unable to generate QR code'}</p>
-              <button class="btn btn-warning" onclick="refreshAccountQR('${phoneId}')">
+              <button class="btn btn-warning" onclick="showAccountQR('${phoneId}', 0)">
                 <i class="fas fa-retry me-1"></i>Try Again
               </button>
             </div>
@@ -464,7 +498,7 @@ System initialized. Ready to manage WhatsApp accounts.
             <i class="fas fa-times-circle fa-2x mb-3"></i>
             <h5>Error Loading QR Code</h5>
             <p>${error.message}</p>
-            <button class="btn btn-danger" onclick="refreshAccountQR('${phoneId}')">
+            <button class="btn btn-danger" onclick="showAccountQR('${phoneId}', 0)">
               <i class="fas fa-retry me-1"></i>Retry
             </button>
           </div>
@@ -475,7 +509,36 @@ System initialized. Ready to manage WhatsApp accounts.
 
     async function refreshAccountQR(phoneId) {
       if (selectedAccount === phoneId) {
-        await showAccountQR(phoneId);
+        await showAccountQR(phoneId, 0);
+      }
+    }
+
+    async function restartAccount(phoneId) {
+      if (!confirm(`⚠️ Are you sure you want to restart the session for ${phoneId}?`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/accounts/${phoneId}/refresh`, {
+          method: 'POST'
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          log(`Session restarted for ${phoneId}`, 'success');
+          showNotification(`✅ Session restarted for ${phoneId}`, 'success');
+          
+          // Wait a moment then show QR
+          setTimeout(() => {
+            showAccountQR(phoneId, 0);
+          }, 2000);
+        } else {
+          log(`Error restarting session: ${data.message}`, 'error');
+          showNotification(`❌ ${data.message}`, 'danger');
+        }
+      } catch (error) {
+        log(`Error restarting session: ${error.message}`, 'error');
+        showNotification(`❌ Error: ${error.message}`, 'danger');
       }
     }
 

@@ -2,10 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { WhatsAppAccount } = require('../models');
 const phoneSessionManager = require('../services/phoneSessionManager');
-const { validatePhoneId } = require('../middleware/phoneAuth');
 
-// Apply phone_id validation to all routes
-router.use(validatePhoneId);
+// Note: validatePhoneId middleware removed from global application
+// It should only be used where phone-id header is actually required
 
 /**
  * Create a new WhatsApp account
@@ -120,15 +119,57 @@ router.get('/:phone_id/qr', async (req, res) => {
         }
 
         // Get QR code from session manager
-        const qrCode = phoneSessionManager.getQRCode(phone_id) || account.qr_code;
+        let qrCode = phoneSessionManager.getQRCode(phone_id) || account.qr_code;
 
+        // If no QR code and no active session, reinitialize the session
         if (!qrCode) {
-            return res.status(404).json({
-                error: 'QR code not available',
-                message: 'QR code is not generated yet. Please wait...',
-                phone_id: phone_id,
-                status: account.status
-            });
+            const session = phoneSessionManager.getSession(phone_id);
+            
+            if (!session) {
+                // Session doesn't exist (likely after logout), reinitialize it
+                console.log(`🔄 No session found for ${phone_id}, reinitializing...`);
+                
+                try {
+                    await phoneSessionManager.createSession(phone_id, false);
+                    
+                    // Wait longer for QR to be generated (increased from 2 to 5 seconds)
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                    
+                    // Try to get QR code again
+                    qrCode = phoneSessionManager.getQRCode(phone_id);
+                    
+                    if (!qrCode) {
+                        return res.status(202).json({
+                            success: true,
+                            message: 'Session is being initialized. QR code will be available shortly. Please try again in a few seconds.',
+                            phone_id: phone_id,
+                            status: 'initializing',
+                            retry_after: 5
+                        });
+                    }
+                } catch (initError) {
+                    console.error(`❌ Error reinitializing session for ${phone_id}:`, initError);
+                    return res.status(500).json({
+                        error: 'Failed to initialize session',
+                        message: initError.message,
+                        phone_id: phone_id
+                    });
+                }
+            } else {
+                // Session exists but no QR yet, wait a bit
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                qrCode = phoneSessionManager.getQRCode(phone_id);
+                
+                if (!qrCode) {
+                    return res.status(202).json({
+                        success: true,
+                        message: 'QR code is being generated. Please wait a moment and try again.',
+                        phone_id: phone_id,
+                        status: account.status,
+                        retry_after: 3
+                    });
+                }
+            }
         }
 
         res.json({

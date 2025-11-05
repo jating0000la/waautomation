@@ -30,6 +30,45 @@
         .loading-spinner { text-align: center; padding: 40px; }
         .loading-spinner i { font-size: 3em; color: #25D366; }
         .badge-custom { padding: 6px 12px; border-radius: 6px; font-size: 0.85em; font-weight: 600; }
+        
+        /* Account Selector */
+        .account-chip-container { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+        .account-chip { 
+            background: white; 
+            border: 2px solid #e9ecef; 
+            border-radius: 20px; 
+            padding: 0.4rem 0.85rem; 
+            cursor: pointer; 
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .account-chip:hover { 
+            border-color: #25D366; 
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(37, 211, 102, 0.2);
+        }
+        .account-chip.active { 
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); 
+            color: white; 
+            border-color: #25D366;
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+        }
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status-dot.connected { background: #10b981; animation: pulse 2s infinite; }
+        .status-dot.disconnected { background: #ef4444; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
     </style>
 </head>
 <body>
@@ -44,6 +83,23 @@
                     <a href="index.html" class="btn btn-light btn-lg">
                         <i class="fas fa-home me-2"></i>Back to Home
                     </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Selector Section -->
+        <div class="section-card">
+            <div class="section-header">
+                <h3 class="mb-0"><i class="fas fa-mobile-alt me-2"></i>Select WhatsApp Account</h3>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="legacyMode">
+                    <label class="form-check-label" for="legacyMode" style="font-size: 0.85rem;">Legacy Mode</label>
+                </div>
+            </div>
+            <div id="accountSelector" class="account-chip-container">
+                <div class="text-center w-100">
+                    <div class="spinner-border spinner-border-sm text-success me-2"></div>
+                    <span class="text-muted" style="font-size: 0.85rem;">Loading accounts...</span>
                 </div>
             </div>
         </div>
@@ -161,6 +217,13 @@
         let allContacts = [];
         let allChats = [];
         let allGroups = [];
+        
+        // State management
+        const state = {
+            accounts: [],
+            selectedAccount: null,
+            isLegacyMode: false
+        };
 
         // Show notification
         function showNotification(message, type = 'success') {
@@ -173,10 +236,125 @@
             setTimeout(() => alertDiv.remove(), 3000);
         }
 
+        // Load accounts
+        async function loadAccounts() {
+            try {
+                // Try to fetch accounts from the API
+                const response = await fetch('/api/v2/accounts');
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load accounts');
+                }
+                
+                const data = await response.json();
+                
+                if (!data.success || !data.accounts || data.accounts.length === 0) {
+                    // Show legacy mode message
+                    document.getElementById('accountSelector').innerHTML = `
+                        <div class="alert alert-info w-100">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Multi-account mode not available. Enable Legacy Mode to continue.
+                        </div>`;
+                    
+                    // Auto-enable legacy mode
+                    document.getElementById('legacyMode').checked = true;
+                    state.isLegacyMode = true;
+                    loadAllData();
+                    return;
+                }
+                
+                state.accounts = data.accounts;
+                displayAccounts();
+                
+                // Auto-select first connected account
+                const firstConnected = state.accounts.find(acc => acc.status === 'connected');
+                if (firstConnected) {
+                    selectAccount(firstConnected);
+                }
+            } catch (error) {
+                console.error('Error loading accounts:', error);
+                // Fall back to legacy mode
+                document.getElementById('accountSelector').innerHTML = `
+                    <div class="alert alert-info w-100">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Using Legacy Mode (single account)
+                    </div>`;
+                
+                // Auto-enable legacy mode
+                document.getElementById('legacyMode').checked = true;
+                state.isLegacyMode = true;
+                loadAllData();
+            }
+        }
+        
+        // Load all data
+        function loadAllData() {
+            loadStats();
+            loadMessages();
+            loadContacts();
+            loadChats();
+            loadGroups();
+        }
+
+        // Display accounts
+        function displayAccounts() {
+            const container = document.getElementById('accountSelector');
+            container.innerHTML = state.accounts.map(account => `
+                <div class="account-chip ${state.selectedAccount?.id === account.id ? 'active' : ''}" 
+                     onclick="selectAccount(${JSON.stringify(account).replace(/"/g, '&quot;')})">
+                    <span class="status-dot ${account.status === 'connected' ? 'connected' : 'disconnected'}"></span>
+                    <span>${account.name || account.phoneNumber || account.id}</span>
+                    ${account.status === 'connected' ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-times-circle"></i>'}
+                </div>
+            `).join('');
+        }
+
+        // Select account
+        function selectAccount(account) {
+            if (typeof account === 'string') {
+                account = JSON.parse(account);
+            }
+            
+            state.selectedAccount = account;
+            displayAccounts();
+            
+            // Reload all data with selected account
+            loadAllData();
+            
+            showNotification(`📱 Selected: ${account.name || account.phoneNumber}`, 'success');
+        }
+
+        // Get API headers
+        function getHeaders() {
+            const headers = {};
+            
+            if (state.isLegacyMode) {
+                headers['Authorization'] = 'Bearer ' + (localStorage.getItem('token') || '');
+            } else if (state.selectedAccount) {
+                headers['phone-id'] = state.selectedAccount.id;
+                headers['Authorization'] = 'Bearer ' + (localStorage.getItem(`token_${state.selectedAccount.id}`) || localStorage.getItem('token') || '');
+            }
+            
+            return headers;
+        }
+
+        // Toggle legacy mode
+        document.getElementById('legacyMode')?.addEventListener('change', (e) => {
+            state.isLegacyMode = e.target.checked;
+            if (e.target.checked) {
+                state.selectedAccount = null;
+                if (state.accounts.length > 0) {
+                    displayAccounts();
+                }
+            }
+            loadAllData();
+        });
+
         // Load statistics
         async function loadStats() {
             try {
-                const response = await fetch('/database/stats');
+                const headers = getHeaders();
+                const response = await fetch('/database/stats', { headers });
                 const data = await response.json();
                 
                 document.getElementById('stats').innerHTML = `
@@ -230,7 +408,8 @@
         // Load messages
         async function loadMessages(page = 0) {
             try {
-                const response = await fetch(`/database/messages?limit=${pageSize}&offset=${page * pageSize}`);
+                const headers = getHeaders();
+                const response = await fetch(`/database/messages?limit=${pageSize}&offset=${page * pageSize}`, { headers });
                 const data = await response.json();
                 allMessages = data.messages;
                 
@@ -274,7 +453,8 @@
         // Load contacts
         async function loadContacts() {
             try {
-                const response = await fetch('/database/contacts');
+                const headers = getHeaders();
+                const response = await fetch('/database/contacts', { headers });
                 const data = await response.json();
                 allContacts = data.contacts;
                 
@@ -313,7 +493,8 @@
         // Load chats
         async function loadChats() {
             try {
-                const response = await fetch('/database/chats');
+                const headers = getHeaders();
+                const response = await fetch('/database/chats', { headers });
                 const data = await response.json();
                 allChats = data.chats;
                 
@@ -357,7 +538,8 @@
         // Load groups
         async function loadGroups() {
             try {
-                const response = await fetch('/database/groups');
+                const headers = getHeaders();
+                const response = await fetch('/database/groups', { headers });
                 const data = await response.json();
                 allGroups = data.groups;
                 
@@ -490,11 +672,7 @@
 
         // Initialize page
         document.addEventListener('DOMContentLoaded', () => {
-            loadStats();
-            loadMessages();
-            loadContacts();
-            loadChats();
-            loadGroups();
+            loadAccounts();
             setupSearch();
             
             // Auto-refresh stats every 30 seconds
