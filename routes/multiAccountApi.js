@@ -972,4 +972,290 @@ router.post('/groups/leave', requireSessionReady(phoneSessionManager), async (re
     }
 });
 
+// ============================================
+// REST-STYLE GROUP MANAGEMENT ALIASES
+// These routes provide REST-style URLs for better frontend compatibility
+// ============================================
+
+/**
+ * Get group info (REST-style alias)
+ * GET /api/v2/groups/:groupId/info
+ */
+router.get('/groups/:groupId/info', requireSessionReady(phoneSessionManager), async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const client = req.whatsappClient;
+        const phoneId = req.phoneId;
+        
+        const chat = await client.getChatById(groupId);
+        
+        if (!chat.isGroup) {
+            return res.status(400).json({
+                error: 'Not a group',
+                message: 'The specified chat is not a group',
+                phone_id: phoneId
+            });
+        }
+        
+        const groupData = {
+            id: chat.id._serialized,
+            name: chat.name,
+            description: chat.description || '',
+            participants: chat.participants.map(p => ({
+                id: p.id._serialized,
+                isAdmin: p.isAdmin,
+                isSuperAdmin: p.isSuperAdmin
+            })),
+            participantCount: chat.participants.length,
+            owner: chat.owner ? chat.owner._serialized : null,
+            createdAt: chat.timestamp,
+            isReadOnly: chat.isReadOnly || false
+        };
+        
+        res.json({
+            success: true,
+            phone_id: phoneId,
+            group: groupData
+        });
+    } catch (error) {
+        console.error('❌ Error getting group info:', error);
+        res.status(500).json({
+            error: 'Failed to get group info',
+            message: error.message,
+            phone_id: req.phoneId
+        });
+    }
+});
+
+/**
+ * Update group info (REST-style alias)
+ * PUT /api/v2/groups/:groupId/info
+ */
+router.put('/groups/:groupId/info', requireSessionReady(phoneSessionManager), async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const { name, description } = req.body;
+        const client = req.whatsappClient;
+        const phoneId = req.phoneId;
+        
+        if (!name && description === undefined) {
+            return res.status(400).json({
+                error: 'Missing fields',
+                message: 'At least one of "name" or "description" is required',
+                phone_id: phoneId
+            });
+        }
+        
+        const chat = await client.getChatById(groupId);
+        
+        if (!chat.isGroup) {
+            return res.status(400).json({
+                error: 'Not a group',
+                message: 'The specified chat is not a group',
+                phone_id: phoneId
+            });
+        }
+        
+        const updates = {};
+        
+        if (name) {
+            await chat.setSubject(name);
+            updates.name = name;
+        }
+        
+        if (description !== undefined) {
+            await chat.setDescription(description);
+            updates.description = description;
+        }
+        
+        res.json({
+            success: true,
+            phone_id: phoneId,
+            message: 'Group info updated successfully',
+            groupId: groupId,
+            updates: updates
+        });
+    } catch (error) {
+        console.error('❌ Error updating group info:', error);
+        res.status(500).json({
+            error: 'Failed to update group info',
+            message: error.message,
+            phone_id: req.phoneId
+        });
+    }
+});
+
+/**
+ * Get group participants (REST-style alias)
+ * GET /api/v2/groups/:groupId/participants
+ */
+router.get('/groups/:groupId/participants', requireSessionReady(phoneSessionManager), async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const client = req.whatsappClient;
+        const phoneId = req.phoneId;
+        
+        const chat = await client.getChatById(groupId);
+        
+        if (!chat.isGroup) {
+            return res.status(400).json({
+                error: 'Not a group',
+                message: 'The specified chat is not a group',
+                phone_id: phoneId
+            });
+        }
+        
+        const participants = chat.participants.map(p => ({
+            id: p.id._serialized,
+            isAdmin: p.isAdmin,
+            isSuperAdmin: p.isSuperAdmin
+        }));
+        
+        res.json({
+            success: true,
+            phone_id: phoneId,
+            groupId: groupId,
+            participants: participants,
+            count: participants.length
+        });
+    } catch (error) {
+        console.error('❌ Error getting participants:', error);
+        res.status(500).json({
+            error: 'Failed to get participants',
+            message: error.message,
+            phone_id: req.phoneId
+        });
+    }
+});
+
+/**
+ * Add participant to group (REST-style alias)
+ * POST /api/v2/groups/:groupId/participants
+ */
+router.post('/groups/:groupId/participants', requireSessionReady(phoneSessionManager), async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const { participantId, participantIds } = req.body;
+        const client = req.whatsappClient;
+        const phoneId = req.phoneId;
+        
+        if (!participantId && !participantIds) {
+            return res.status(400).json({
+                error: 'Missing required field',
+                message: 'Either "participantId" or "participantIds" array is required',
+                phone_id: phoneId
+            });
+        }
+        
+        const chat = await client.getChatById(groupId);
+        
+        if (!chat.isGroup) {
+            return res.status(400).json({
+                error: 'Not a group',
+                message: 'The specified chat is not a group',
+                phone_id: phoneId
+            });
+        }
+        
+        // Handle single or multiple participants
+        const idsToAdd = participantIds || [participantId];
+        const formattedIds = idsToAdd.map(id => id.includes('@c.us') ? id : `${id}@c.us`);
+        
+        await chat.addParticipants(formattedIds);
+        
+        res.json({
+            success: true,
+            phone_id: phoneId,
+            groupId: groupId,
+            message: `Added ${formattedIds.length} participant(s) successfully`,
+            participantsAdded: formattedIds
+        });
+    } catch (error) {
+        console.error('❌ Error adding participant:', error);
+        res.status(500).json({
+            error: 'Failed to add participant',
+            message: error.message,
+            phone_id: req.phoneId
+        });
+    }
+});
+
+/**
+ * Remove participant from group (REST-style alias)
+ * DELETE /api/v2/groups/:groupId/participants/:participantId
+ */
+router.delete('/groups/:groupId/participants/:participantId', requireSessionReady(phoneSessionManager), async (req, res) => {
+    try {
+        const { groupId, participantId } = req.params;
+        const client = req.whatsappClient;
+        const phoneId = req.phoneId;
+        
+        const chat = await client.getChatById(groupId);
+        
+        if (!chat.isGroup) {
+            return res.status(400).json({
+                error: 'Not a group',
+                message: 'The specified chat is not a group',
+                phone_id: phoneId
+            });
+        }
+        
+        const formattedId = participantId.includes('@c.us') ? participantId : `${participantId}@c.us`;
+        await chat.removeParticipants([formattedId]);
+        
+        res.json({
+            success: true,
+            phone_id: phoneId,
+            groupId: groupId,
+            message: 'Participant removed successfully',
+            participantId: formattedId
+        });
+    } catch (error) {
+        console.error('❌ Error removing participant:', error);
+        res.status(500).json({
+            error: 'Failed to remove participant',
+            message: error.message,
+            phone_id: req.phoneId
+        });
+    }
+});
+
+/**
+ * Leave group (REST-style alias)
+ * POST /api/v2/groups/:groupId/leave
+ */
+router.post('/groups/:groupId/leave', requireSessionReady(phoneSessionManager), async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const client = req.whatsappClient;
+        const phoneId = req.phoneId;
+        
+        const chat = await client.getChatById(groupId);
+        
+        if (!chat.isGroup) {
+            return res.status(400).json({
+                error: 'Not a group',
+                message: 'The specified chat is not a group',
+                phone_id: phoneId
+            });
+        }
+        
+        await chat.leave();
+        
+        res.json({
+            success: true,
+            phone_id: phoneId,
+            groupId: groupId,
+            message: 'Successfully left the group'
+        });
+    } catch (error) {
+        console.error('❌ Error leaving group:', error);
+        res.status(500).json({
+            error: 'Failed to leave group',
+            message: error.message,
+            phone_id: req.phoneId
+        });
+    }
+});
+
 module.exports = router;

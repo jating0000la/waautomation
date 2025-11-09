@@ -13,6 +13,116 @@
       background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
     }
     
+    /* Enhanced Header Styling */
+    .page-header {
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+      border-radius: 16px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e9ecef;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .page-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #25D366 0%, #128C7E 50%, #25D366 100%);
+    }
+    
+    .header-content h1 {
+      font-size: 1.875rem;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 0.25rem;
+    }
+    
+    .header-content h1 i {
+      font-size: 1.75rem;
+      color: #25D366;
+    }
+    
+    .header-content p {
+      font-size: 1rem;
+      color: #6c757d;
+      margin-bottom: 0;
+    }
+    
+    .header-actions .btn {
+      padding: 0.5rem 1rem;
+      font-weight: 500;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+    
+    .header-actions .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .dropdown-menu {
+      border-radius: 12px;
+      border: 1px solid #e9ecef;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      padding: 0.5rem 0;
+    }
+    
+    .dropdown-header {
+      color: #495057;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0.5rem 1rem;
+    }
+    
+    .dropdown-item {
+      padding: 0.5rem 1rem;
+      transition: all 0.2s ease;
+    }
+    
+    .dropdown-item:hover {
+      background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%);
+      transform: translateX(4px);
+    }
+    
+    @media (max-width: 768px) {
+      .page-header {
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+      
+      .header-content h1 {
+        font-size: 1.5rem;
+      }
+      
+      .header-content h1 i {
+        font-size: 1.375rem;
+      }
+      
+      .header-content p {
+        font-size: 0.9375rem;
+      }
+      
+      .header-actions {
+        text-align: center !important;
+      }
+      
+      .header-actions .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+      }
+      
+      .header-actions .dropdown {
+        width: 100%;
+      }
+    }
+    
     /* Enhanced Account Cards */
     .account-card-compact {
       border-radius: 12px;
@@ -403,26 +513,42 @@
 
   <main class="container py-4">
     <div class="page-header">
-      <div class="d-flex justify-content-between align-items-center flex-wrap">
-        <div>
-          <h1><i class="fas fa-rocket"></i>Platform Overview</h1>
-          <p>Powerful WhatsApp automation at your fingertips</p>
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <div class="header-content">
+            <h1 class="display-6 fw-bold text-dark mb-2">
+              <i class="fas fa-rocket text-success me-3"></i>Platform Overview
+            </h1>
+            <p class="lead text-muted mb-0">Powerful WhatsApp automation at your fingertips</p>
+          </div>
         </div>
-        <div class="d-flex gap-2 mt-3 mt-md-0">
-          <button class="btn btn-outline-primary btn-sm" onclick="refreshStatus()">
-            <i class="fas fa-sync-alt me-1"></i>Refresh
-          </button>
-          <div class="dropdown">
-            <button class="btn btn-whatsapp btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-              <i class="fas fa-magic me-1"></i>Quick Actions
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+          <div class="header-actions">
+            <button class="btn btn-outline-secondary me-2" onclick="refreshStatus()">
+              <i class="fas fa-sync-alt me-2"></i>Refresh
             </button>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="send-message.html"><i class="fas fa-comment me-2"></i>Send Message</a></li>
-              <li><a class="dropdown-item" href="send-media.html"><i class="fas fa-photo-video me-2"></i>Send Media</a></li>
-              <li><a class="dropdown-item" href="group-management.html"><i class="fas fa-users me-2"></i>Manage Groups</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="account.html"><i class="fas fa-cog me-2"></i>Account Settings</a></li>
-            </ul>
+            <div class="dropdown d-inline-block">
+              <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-bolt me-2"></i>Quick Actions
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><h6 class="dropdown-header">Management</h6></li>
+                <li><a class="dropdown-item" href="account.html">
+                  <i class="fas fa-mobile-alt text-primary me-2"></i>Manage Accounts
+                </a></li>
+                <li><a class="dropdown-item" href="group-management.html">
+                  <i class="fas fa-users text-info me-2"></i>Manage Groups
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><h6 class="dropdown-header">Tools</h6></li>
+                <li><a class="dropdown-item" href="api-documentation.html">
+                  <i class="fas fa-book text-warning me-2"></i>API Docs & Tester
+                </a></li>
+                <li><a class="dropdown-item" href="account.html">
+                  <i class="fas fa-cog text-secondary me-2"></i>Account Settings
+                </a></li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
@@ -461,23 +587,11 @@
       <div class="col-lg-4">
         <div class="card feature-card">
           <div class="card-header">
-            <i class="fas fa-comments me-2"></i>Basic Messaging
+            <i class="fas fa-mobile-alt me-2"></i>Account Management
           </div>
           <div class="list-group list-group-flush">
-            <a class="list-group-item" href="send-message.html">
-              <i class="fas fa-comment-dots"></i>Send Message
-            </a>
-            <a class="list-group-item" href="send-media.html">
-              <i class="fas fa-photo-video"></i>Send Media
-            </a>
-            <a class="list-group-item" href="send-file-by-url.html">
-              <i class="fas fa-link"></i>Send File by URL
-            </a>
-            <a class="list-group-item" href="send-location.html">
-              <i class="fas fa-map-marker-alt"></i>Send Location
-            </a>
-            <a class="list-group-item" href="send-contact.html">
-              <i class="fas fa-address-card"></i>Send Contact
+            <a class="list-group-item" href="account.html">
+              <i class="fas fa-user-shield"></i>Account Settings
             </a>
           </div>
         </div>
@@ -486,20 +600,12 @@
       <div class="col-lg-4">
         <div class="card feature-card">
           <div class="card-header">
-            <i class="fas fa-users-cog me-2"></i>Groups & Management
+            <i class="fas fa-users-cog me-2"></i>Group Management
           </div>
           <div class="list-group list-group-flush">
             <a class="list-group-item" href="group-management.html">
-              <i class="fas fa-users"></i>Group Management
+              <i class="fas fa-users-cog"></i>Advanced Group Tools
             </a>
-            <a class="list-group-item" href="account.html">
-              <i class="fas fa-user-shield"></i>Account & Device
-            </a>
-            
-            <a class="list-group-item" href="contacts.html">
-              <i class="fas fa-user-shield"></i>Contacts
-            </a>
-
           </div>
         </div>
       </div>
@@ -507,20 +613,11 @@
       <div class="col-lg-4">
         <div class="card feature-card">
           <div class="card-header">
-            <i class="fas fa-tools me-2"></i>System & Tools
+            <i class="fas fa-code me-2"></i>API & Tools
           </div>
           <div class="list-group list-group-flush">
-            <a class="list-group-item" href="message-logs.html">
-              <i class="fas fa-history"></i>Message Logs
-            </a>
-            <a class="list-group-item" href="api-keys.html">
-              <i class="fas fa-key"></i>API Key Management
-            </a>
-            <a class="list-group-item" href="api-testing.html">
-              <i class="fas fa-flask"></i>API Testing Console
-            </a>
-            <a class="list-group-item" href="webhook.html">
-              <i class="fas fa-webhook"></i>Webhook
+            <a class="list-group-item" href="api-documentation.html">
+              <i class="fas fa-book"></i>API Docs & Tester
             </a>
           </div>
         </div>
@@ -611,7 +708,7 @@
                     <ul class="dropdown-menu dropdown-menu-end">
                       ${account.status === 'connected' 
                         ? `
-                          <li><a class="dropdown-item" href="send-message.html?account=${account.phone_id}">
+                          <li><a class="dropdown-item" href="multi-account.html?account=${account.phone_id}">
                             <i class="fas fa-comment text-primary me-2"></i>Send Message
                           </a></li>
                           <li><a class="dropdown-item" href="group-management.html?account=${account.phone_id}">
@@ -664,7 +761,7 @@
           </div>
           <div class="action-buttons">
             ${connectedCount > 0 ? `
-              <a href="send-message.html" class="btn btn-success btn-sm">
+              <a href="multi-account.html" class="btn btn-success btn-sm">
                 <i class="fas fa-comment me-1"></i>Send Message
               </a>
               <a href="group-management.html" class="btn btn-primary btn-sm">

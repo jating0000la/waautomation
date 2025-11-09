@@ -92,27 +92,8 @@ const statusLimiter = rateLimit({
     message: 'Too many status requests. Please slow down.',
 });
 
-// CSRF token middleware (simple implementation)
-function csrfProtection(req, res, next) {
-    // Skip CSRF for safe methods
-    if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
-        return next();
-    }
-    
-    // Skip CSRF for API routes (they use API key auth)
-    if (req.path.startsWith('/api/')) {
-        return next();
-    }
-    
-    // For now, skip CSRF for all JSON requests
-    // In production, implement proper CSRF token validation
-    const contentType = req.headers['content-type'];
-    if (contentType && contentType.includes('application/json')) {
-        return next();
-    }
-    
-    next();
-}
+// CSRF protection removed - sessions no longer used
+// For API security, use API key authentication instead
 
 module.exports = {
     securityHeaders,
@@ -123,6 +104,5 @@ module.exports = {
     dndLimiter,
     campaignLimiter,
     settingsLimiter,
-    statusLimiter,
-    csrfProtection
+    statusLimiter
 };

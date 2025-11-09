@@ -1,147 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Multi-Phone Account Manager</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="assets/styles/app.css" />
-  <style>
-    .phone-id-input {
-      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    }
-    .legacy-section {
-      background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
-      border: 2px solid #2196f3;
-      border-radius: 12px;
-      padding: 1.5rem;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Management - WhatsApp Automation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/styles/app.css">
 </head>
 <body>
+  <!-- Navigation -->
   <nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container">
       <a class="navbar-brand" href="index.html">
-        <i class="fab fa-whatsapp me-2"></i>WA Automation
+        <i class="fab fa-whatsapp"></i>WA Automation
       </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
       </button>
-      <div class="collapse navbar-collapse" id="mainNav">
+      <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
           <li class="nav-item">
-            <a class="nav-link" href="multi-account.html">
-              <i class="fas fa-users me-1"></i>Multi-Account UI
-            </a>
+            <a class="nav-link" href="index.html"><i class="fas fa-home me-2"></i>Home</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="index.html">
-              <i class="fas fa-home me-1"></i>Dashboard
-            </a>
+            <a class="nav-link active" href="account.html"><i class="fas fa-user-circle me-2"></i>Account</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="group-management.html"><i class="fas fa-users me-2"></i>Groups</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="api-documentation.html"><i class="fas fa-book me-2"></i>API Docs</a>
           </li>
         </ul>
       </div>
     </div>
   </nav>
 
-  <main class="container py-4">
+  <!-- Main Content -->
+  <main class="container">
+    <!-- Page Header -->
     <div class="page-header">
-      <div class="d-flex justify-content-between align-items-center flex-wrap">
+      <div class="d-flex justify-content-between align-items-center">
         <div>
-          <h1>
-            <i class="fas fa-mobile-alt me-2"></i>Multi-Phone Account Manager
-          </h1>
-          <p class="text-muted mb-0">Manage multiple WhatsApp accounts with phone_id-based isolation</p>
+          <h1><i class="fas fa-user-shield"></i>Account Management</h1>
+          <p>Manage your WhatsApp accounts and API configurations</p>
         </div>
-        <a href="index.html" class="btn btn-outline-secondary mt-2 mt-md-0">
-          <i class="fas fa-arrow-left me-1"></i>Back
-        </a>
+        <button class="btn btn-whatsapp" onclick="loadAccounts()">
+          <i class="fas fa-sync-alt me-2"></i>Refresh All
+        </button>
       </div>
     </div>
 
-    <!-- Legacy Account Section -->
-    <div class="legacy-section p-4 mb-4">
-      <div class="row align-items-center">
-        <div class="col-md-8">
-          <h5 class="mb-2">
-            <i class="fas fa-history text-primary me-2"></i>Legacy WhatsApp Account
-          </h5>
-          <p class="text-muted mb-2">
-            Original single-account system for backward compatibility
-          </p>
-          <div id="legacyStatusBadge" class="mb-2">
-            <span class="badge bg-secondary">Loading...</span>
+    <!-- System Status -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <i class="fas fa-chart-line me-2"></i>System Status
           </div>
-        </div>
-        <div class="col-md-4 text-end">
-          <div class="d-flex flex-column gap-2">
-            <button class="btn btn-primary btn-sm" id="btnLegacyStatus">
-              <i class="fas fa-info-circle me-1"></i>Check Status
-            </button>
-            <button class="btn btn-outline-warning btn-sm" id="btnLegacyQR">
-              <i class="fas fa-qrcode me-1"></i>Get QR Code
-            </button>
-            <button class="btn btn-outline-danger btn-sm" id="btnLegacyLogout">
-              <i class="fas fa-sign-out-alt me-1"></i>Logout
-            </button>
+          <div class="card-body">
+            <div id="systemStatus" class="d-flex justify-content-center align-items-center" style="min-height: 60px;">
+              <div class="spinner-border text-primary me-3" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <span class="text-muted">Loading system status...</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Multi-Account Management -->
-    <div class="row g-4">
-      <!-- Account Creation -->
-      <div class="col-lg-4">
-        <div class="card h-100">
-          <div class="card-header bg-primary text-white">
-            <h6 class="mb-0">
-              <i class="fas fa-plus-circle me-2"></i>Create New Account
-            </h6>
+    <!-- Create New Account -->
+    <div class="row mb-4">
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header">
+            <i class="fas fa-plus-circle me-2"></i>Create New Account
           </div>
           <div class="card-body">
             <form id="createAccountForm">
               <div class="mb-3">
-                <label for="phoneId" class="form-label">Phone ID *</label>
-                <input type="text" class="form-control phone-id-input" id="phoneId" 
-                       placeholder="e.g., user123, phone_001" 
-                       pattern="[a-zA-Z0-9_-]+" 
-                       title="Only letters, numbers, hyphens, and underscores allowed">
-                <div class="form-text">Unique identifier for this WhatsApp account</div>
+                <label for="phoneId" class="form-label">Phone ID <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="phoneId" name="phoneId" 
+                       placeholder="e.g., business_1, personal, shop_main" required>
+                <div class="form-text">Use letters, numbers, hyphens, and underscores only</div>
               </div>
               <div class="mb-3">
-                <label for="accountName" class="form-label">Account Name</label>
-                <input type="text" class="form-control" id="accountName" 
-                       placeholder="e.g., John's Business Account">
+                <label for="accountName" class="form-label">Display Name</label>
+                <input type="text" class="form-control" id="accountName" name="accountName" 
+                       placeholder="e.g., My Business Account">
               </div>
               <div class="mb-3">
-                <label for="webhookUrl" class="form-label">Webhook URL (Optional)</label>
-                <input type="url" class="form-control" id="webhookUrl" 
+                <label for="webhookUrl" class="form-label">Webhook URL</label>
+                <input type="url" class="form-control" id="webhookUrl" name="webhookUrl" 
                        placeholder="https://your-server.com/webhook">
+                <div class="form-text">Optional: URL to receive webhook notifications</div>
               </div>
-              <button type="submit" class="btn btn-success w-100" id="createBtn">
-                <i class="fas fa-plus me-1"></i>Create Account
+              <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-plus me-2"></i>Create Account
               </button>
             </form>
           </div>
         </div>
       </div>
-
-      <!-- QR Code Display -->
-      <div class="col-lg-8">
-        <div class="card h-100">
-          <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
-            <h6 class="mb-0">
-              <i class="fas fa-qrcode me-2"></i>QR Code Scanner
-            </h6>
-            <small class="badge bg-dark">Select account to show QR</small>
+      
+      <!-- API Usage Examples -->
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header">
+            <i class="fas fa-code me-2"></i>Quick API Examples
           </div>
-          <div class="card-body qr-container">
-            <div id="qrDisplay" class="text-center text-muted">
-              <i class="fas fa-mobile-alt fa-3x mb-3 opacity-50"></i>
-              <h5>No Account Selected</h5>
-              <p class="mb-0">Create or select an account to display its QR code</p>
+          <div class="card-body">
+            <div class="mb-3">
+              <h6 class="fw-bold">1. Create Account</h6>
+              <pre class="bg-light p-2 rounded small"><code>POST /api/accounts/create
+Content-Type: application/json
+
+{
+  "phone_id": "my_business",
+  "name": "My Business Account"
+}</code></pre>
+            </div>
+            
+            <div class="mb-3">
+              <h6 class="fw-bold">2. Send Message</h6>
+              <pre class="bg-light p-2 rounded small"><code>POST /api/v2/send-message
+Content-Type: application/json
+phone_id: my_business
+token: your_account_token
+
+{
+  "to": "1234567890",
+  "message": "Hello World!"
+}</code></pre>
+            </div>
+            
+            <div class="text-center">
+              <a href="api-documentation.html" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-book me-1"></i>View Full API Docs
+              </a>
             </div>
           </div>
         </div>
@@ -149,572 +147,765 @@
     </div>
 
     <!-- Accounts List -->
-    <div class="row mt-4">
+    <div class="row">
       <div class="col-12">
         <div class="card">
-          <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-            <h6 class="mb-0">
-              <i class="fas fa-list me-2"></i>All WhatsApp Accounts
-            </h6>
-            <button class="btn btn-light btn-sm" id="refreshAccountsBtn">
-              <i class="fas fa-sync-alt me-1"></i>Refresh
-            </button>
-          </div>
-          <div class="card-body">
-            <div id="accountsList">
-              <div class="text-center text-muted py-4">
-                <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
-                <p>Loading accounts...</p>
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-mobile-alt me-2"></i>WhatsApp Accounts</span>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-primary btn-sm" onclick="loadAccounts()">
+                <i class="fas fa-sync-alt me-1"></i>Refresh
+              </button>
+              <div class="dropdown">
+                <button class="btn btn-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                  <i class="fas fa-tools me-1"></i>Actions
+                </button>
+                <ul class="dropdown-menu">
+                  <li><a class="dropdown-item" href="group-management.html">
+                    <i class="fas fa-users me-2"></i>Manage Groups
+                  </a></li>
+                  <li><a class="dropdown-item" href="api-documentation.html">
+                    <i class="fas fa-book me-2"></i>API Documentation
+                  </a></li>
+                </ul>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Status Display -->
-    <div class="row mt-4">
-      <div class="col-12">
-        <div class="card">
-          <div class="card-header bg-secondary text-white">
-            <h6 class="mb-0">
-              <i class="fas fa-terminal me-2"></i>System Status & Logs
-            </h6>
-          </div>
           <div class="card-body">
-            <pre id="systemLogs" class="small text-muted mb-0" style="white-space:pre-wrap; max-height: 300px; overflow-y: auto;">
-System initialized. Ready to manage WhatsApp accounts.
-            </pre>
+            <div id="accountsList">
+              <div class="d-flex justify-content-center align-items-center" style="min-height: 120px;">
+                <div class="spinner-border text-primary me-3" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <span class="text-muted">Loading accounts...</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </main>
+  
+  <!-- Footer -->
+  <footer class="text-center py-4 mt-5">
+    <div class="container">
+      <p class="text-muted mb-0">
+        <i class="fab fa-whatsapp me-2"></i>&copy; <span id="year"></span> WhatsApp Automation Platform
+      </p>
+    </div>
+  </footer>
+  
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Global state
-    let accounts = [];
-    let selectedAccount = null;
-    let qrIntervals = new Map(); // Track QR refresh intervals per account
+    document.getElementById('year').textContent = new Date().getFullYear();
 
-    // Utility functions
-    function log(message, type = 'info') {
-      const timestamp = new Date().toLocaleTimeString();
-      const logArea = document.getElementById('systemLogs');
-      const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
-      logArea.textContent += `[${timestamp}] ${prefix} ${message}\n`;
-      logArea.scrollTop = logArea.scrollHeight;
-    }
-
-    function showNotification(message, type = 'info') {
-      const alertDiv = document.createElement('div');
-      alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
-      alertDiv.style.zIndex = '9999';
-      alertDiv.style.minWidth = '400px';
-      alertDiv.style.boxShadow = '0 8px 24px rgba(0,0,0,0.2)';
-      alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      `;
-      document.body.appendChild(alertDiv);
-      setTimeout(() => alertDiv.remove(), 5000);
-    }
-
-    function getStatusBadge(status) {
-      switch (status) {
-        case 'connected':
-          return '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Connected</span>';
-        case 'pending':
-          return '<span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Pending QR Scan</span>';
-        case 'disconnected':
-          return '<span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Disconnected</span>';
-        default:
-          return '<span class="badge bg-secondary"><i class="fas fa-question-circle me-1"></i>Unknown</span>';
-      }
-    }
-
-    // API Functions
-    async function createAccount() {
-      const phoneId = document.getElementById('phoneId').value.trim();
-      const accountName = document.getElementById('accountName').value.trim();
-      const webhookUrl = document.getElementById('webhookUrl').value.trim();
-
-      if (!phoneId) {
-        showNotification('❌ Phone ID is required', 'danger');
-        return;
-      }
-
-      if (!/^[a-zA-Z0-9_-]+$/.test(phoneId)) {
-        showNotification('❌ Phone ID can only contain letters, numbers, hyphens, and underscores', 'danger');
-        return;
-      }
-
-      const createBtn = document.getElementById('createBtn');
-      const originalText = createBtn.innerHTML;
-      createBtn.disabled = true;
-      createBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Creating...';
-
-      try {
-        const response = await fetch('/api/accounts/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            phone_id: phoneId,
-            name: accountName || `Account ${phoneId}`,
-            webhook_url: webhookUrl || null
-          })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          log(`Account created: ${phoneId}`, 'success');
-          showNotification(`✅ Account '${phoneId}' created successfully!`, 'success');
-          
-          // Clear form
-          document.getElementById('createAccountForm').reset();
-          
-          // Refresh accounts list
-          await loadAccounts();
-          
-          // Auto-select and show QR for new account
-          selectAccount(phoneId);
-          
-        } else {
-          log(`Failed to create account: ${data.error}`, 'error');
-          showNotification(`❌ ${data.error || 'Failed to create account'}`, 'danger');
+    // Enhanced Account Card Styles
+    const accountCardStyles = `
+      <style>
+        .account-card {
+          border: 1px solid #dee2e6;
+          border-radius: 0.5rem;
+          padding: 1.5rem;
+          margin-bottom: 1.5rem;
+          background: #ffffff;
+          transition: all 0.15s ease-in-out;
+          position: relative;
         }
+        .account-card:hover {
+          box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+          transform: translateY(-2px);
+        }
+        .account-card.connected { 
+          border-left: 4px solid #28a745; 
+          background: linear-gradient(135deg, #ffffff 0%, #f8fff9 100%);
+        }
+        .account-card.pending { 
+          border-left: 4px solid #ffc107; 
+          background: linear-gradient(135deg, #ffffff 0%, #fffef8 100%);
+        }
+        .account-card.disconnected { 
+          border-left: 4px solid #dc3545; 
+          background: linear-gradient(135deg, #ffffff 0%, #fdf8f8 100%);
+        }
+        .status-badge {
+          padding: 0.375rem 0.75rem;
+          border-radius: 0.375rem;
+          color: white;
+          font-size: 0.8125rem;
+          font-weight: 500;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.25rem;
+        }
+        .status-connected { background-color: #28a745; }
+        .status-pending { background-color: #ffc107; color: #212529; }
+        .status-disconnected { background-color: #dc3545; }
+        .status-failed { background-color: #6f42c1; }
+        .qr-container {
+          max-width: 280px;
+          margin: 1rem 0;
+          padding: 1rem;
+          background: #f8f9fa;
+          border-radius: 0.5rem;
+          text-align: center;
+        }
+        .qr-container img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 0.375rem;
+          box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.1);
+        }
+        .account-actions {
+          display: flex;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+          margin-top: 1rem;
+        }
+        .account-actions .btn {
+          flex: 1;
+          min-width: 100px;
+        }
+        .api-usage-details {
+          background: #f8f9fa;
+          padding: 1rem;
+          border-radius: 0.375rem;
+          margin-top: 1rem;
+          font-family: monospace;
+          font-size: 0.8125rem;
+          white-space: pre-wrap;
+          line-height: 1.4;
+        }
+        @media (max-width: 768px) {
+          .account-actions {
+            flex-direction: column;
+          }
+          .account-actions .btn {
+            width: 100%;
+          }
+        }
+      </style>
+    `;
+    document.head.insertAdjacentHTML('beforeend', accountCardStyles);
+
+    // Load system status
+    async function loadSystemStatus() {
+      try {
+        const response = await fetch('/status');
+        const data = await response.json();
+        
+        const statusDiv = document.getElementById('systemStatus');
+        statusDiv.innerHTML = `
+          <div class="row g-3">
+            <div class="col-md-3">
+              <div class="text-center p-3 bg-light rounded">
+                <h5 class="text-primary mb-1">${data.multi_account?.total_accounts || 0}</h5>
+                <small class="text-muted">Total Accounts</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="text-center p-3 bg-light rounded">
+                <h5 class="text-success mb-1">${data.multi_account?.connected_accounts || 0}</h5>
+                <small class="text-muted">Connected</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="text-center p-3 bg-light rounded">
+                <h5 class="text-warning mb-1">${data.multi_account?.pending_accounts || 0}</h5>
+                <small class="text-muted">Pending</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="text-center p-3 bg-light rounded">
+                <h5 class="mb-1">
+                  <span class="badge ${data.legacy_client?.ready ? 'bg-success' : 'bg-warning'}">
+                    ${data.legacy_client?.ready ? 'Ready' : 'Pending'}
+                  </span>
+                </h5>
+                <small class="text-muted">Legacy Client</small>
+              </div>
+            </div>
+          </div>
+        `;
       } catch (error) {
-        log(`Error creating account: ${error.message}`, 'error');
-        showNotification(`❌ Error: ${error.message}`, 'danger');
-      } finally {
-        createBtn.disabled = false;
-        createBtn.innerHTML = originalText;
+        console.error('Error loading system status:', error);
+        document.getElementById('systemStatus').innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>Error loading system status</div>';
       }
     }
 
+    // Load accounts list
     async function loadAccounts() {
       try {
         const response = await fetch('/api/accounts');
         const data = await response.json();
-
-        if (response.ok) {
-          accounts = data.accounts;
-          renderAccountsList();
-          log(`Loaded ${accounts.length} accounts`, 'info');
-        } else {
-          log(`Failed to load accounts: ${data.error}`, 'error');
+        
+        const accountsList = document.getElementById('accountsList');
+        
+        if (!data.accounts || data.accounts.length === 0) {
+          accountsList.innerHTML = `
+            <div class="text-center py-5">
+              <i class="fas fa-mobile-alt fa-3x text-muted mb-3"></i>
+              <h5>No Accounts Created</h5>
+              <p class="text-muted">Create your first WhatsApp account to get started</p>
+            </div>
+          `;
+          return;
         }
-      } catch (error) {
-        log(`Error loading accounts: ${error.message}`, 'error');
-      }
-    }
-
-    function renderAccountsList() {
-      const container = document.getElementById('accountsList');
-      
-      if (accounts.length === 0) {
-        container.innerHTML = `
-          <div class="text-center text-muted py-4">
-            <i class="fas fa-inbox fa-2x mb-3"></i>
-            <h5>No Accounts Found</h5>
-            <p>Create your first WhatsApp account using the form above</p>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = accounts.map(account => `
-        <div class="account-card card mb-3 status-${account.status}" data-phone-id="${account.phone_id}">
-          <div class="card-body">
-            <div class="row align-items-center">
-              <div class="col-md-6">
-                <h6 class="mb-1">
-                  <i class="fas fa-mobile-alt me-2"></i>${account.name || account.phone_id}
-                </h6>
-                <p class="text-muted small mb-1">
-                  <strong>Phone ID:</strong> <code>${account.phone_id}</code>
-                </p>
-                <p class="text-muted small mb-2">
-                  <strong>Created:</strong> ${new Date(account.created_at).toLocaleString()}
-                </p>
-                ${getStatusBadge(account.status)}
+        
+        accountsList.innerHTML = data.accounts.map(account => `
+          <div class="account-card ${account.status}" id="account-${account.phone_id}">
+            <div class="row align-items-start">
+              <div class="col-md-8">
+                <div class="d-flex align-items-center mb-2">
+                  <i class="fas fa-mobile-alt text-primary me-2 fs-5"></i>
+                  <h5 class="mb-0 me-3">${escapeHtml(account.name || account.phone_id)}</h5>
+                  <span class="status-badge status-${account.status}">
+                    <i class="fas ${getStatusIcon(account.status)} me-1"></i>
+                    ${account.status.toUpperCase()}
+                  </span>
+                </div>
+                <div class="row text-muted small mb-2">
+                  <div class="col-sm-6">
+                    <strong>Phone ID:</strong> ${account.phone_id}
+                  </div>
+                  <div class="col-sm-6">
+                    <strong>Phone Number:</strong> ${account.phone_number || 'Not authenticated'}
+                  </div>
+                </div>
+                <div class="row text-muted small mb-2">
+                  <div class="col-sm-6">
+                    <strong>Session Ready:</strong> ${account.session?.ready ? '<i class="fas fa-check text-success"></i> Yes' : '<i class="fas fa-times text-danger"></i> No'}
+                  </div>
+                  <div class="col-sm-6">
+                    <strong>Last Activity:</strong> ${account.last_activity ? formatDate(account.last_activity) : 'Never'}
+                  </div>
+                </div>
               </div>
-              <div class="col-md-6 text-end">
+              <div class="col-md-4">
                 <div class="account-actions">
-                  <button class="btn btn-primary btn-xs" onclick="selectAccount('${account.phone_id}')">
-                    <i class="fas fa-qrcode me-1"></i>Show QR
+                  <button class="btn btn-primary btn-sm" onclick="showQR('${account.phone_id}')">
+                    <i class="fas fa-qrcode me-1"></i>QR Code
                   </button>
-                  <button class="btn btn-info btn-xs" onclick="checkAccountStatus('${account.phone_id}')">
-                    <i class="fas fa-sync-alt me-1"></i>Status
+                  <button class="btn btn-warning btn-sm" onclick="restartAccount('${account.phone_id}')">
+                    <i class="fas fa-redo me-1"></i>Restart
                   </button>
-                  <button class="btn btn-warning btn-xs" onclick="refreshAccountQR('${account.phone_id}')">
-                    <i class="fas fa-refresh me-1"></i>Refresh QR
-                  </button>
-                  <button class="btn btn-danger btn-xs" onclick="deleteAccount('${account.phone_id}')">
+                  <button class="btn btn-danger btn-sm" onclick="deleteAccount('${account.phone_id}')">
                     <i class="fas fa-trash me-1"></i>Delete
                   </button>
                 </div>
               </div>
             </div>
+            <div id="qr-${account.phone_id}" class="d-none">
+              <hr class="my-3">
+              <div id="qr-content-${account.phone_id}" class="qr-container">
+                Loading QR code...
+              </div>
+            </div>
+            <div class="mt-3">
+              <details class="small">
+                <summary class="fw-bold text-primary" style="cursor: pointer;">API Usage for this account</summary>
+                <div class="api-usage-details">Headers for API calls:
+phone_id: ${account.phone_id}
+token: ${account.token || 'Get from account creation response'}
+
+Example curl command:
+curl -X POST http://localhost:3000/api/v2/send-message \\
+  -H "Content-Type: application/json" \\
+  -H "phone_id: ${account.phone_id}" \\
+  -H "token: YOUR_TOKEN_HERE" \\
+  -d '{"to": "1234567890", "message": "Hello!"}'</div>
+              </details>
+            </div>
           </div>
-        </div>
-      `).join('');
+        `).join('');
+      } catch (error) {
+        console.error('Error loading accounts:', error);
+        document.getElementById('accountsList').innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>Error loading accounts</div>';
+      }
     }
 
-    async function selectAccount(phoneId) {
-      selectedAccount = phoneId;
-      log(`Selected account: ${phoneId}`, 'info');
+    // Show QR code for account
+    async function showQR(phoneId, retryCount = 0) {
+      const qrDiv = document.getElementById(`qr-${phoneId}`);
+      const qrContent = document.getElementById(`qr-content-${phoneId}`);
+      const maxRetries = 10;
       
-      // Highlight selected account
-      document.querySelectorAll('.account-card').forEach(card => {
-        card.classList.remove('border-primary');
-      });
-      document.querySelector(`[data-phone-id="${phoneId}"]`)?.classList.add('border-primary');
+      if (qrDiv.classList.contains('d-none')) {
+        qrDiv.classList.remove('d-none');
+      }
       
-      // Show QR code
-      await showAccountQR(phoneId);
-    }
-
-    async function showAccountQR(phoneId, retryCount = 0) {
-      const qrDisplay = document.getElementById('qrDisplay');
-      const maxRetries = 10; // Maximum number of retries
+      qrContent.innerHTML = '<div class="spinner-border text-primary me-2"></div>Loading QR code...';
       
-      qrDisplay.innerHTML = `
-        <div class="text-center">
-          <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
-          <h5>Loading QR Code</h5>
-          <p class="text-muted">Generating QR code for ${phoneId}...</p>
-          ${retryCount > 0 ? `<small class="text-muted">Attempt ${retryCount + 1}/${maxRetries}</small>` : ''}
-        </div>
-      `;
-
       try {
         const response = await fetch(`/api/accounts/${phoneId}/qr`);
         const data = await response.json();
-
-        if (response.ok && data.qr_code) {
-          const timestamp = new Date().toLocaleTimeString();
-          qrDisplay.innerHTML = `
+        
+        if (data.success && data.qr_code) {
+          qrContent.innerHTML = `
             <div class="text-center">
-              <h5 class="mb-3">
-                <i class="fas fa-mobile-alt me-2 text-primary"></i>${phoneId}
-              </h5>
-              <img src="${data.qr_code}" class="img-fluid border rounded shadow-sm mb-3" 
-                   alt="QR Code for ${phoneId}" style="max-width: 300px;">
-              <div class="alert alert-info mb-3">
-                <h6><i class="fas fa-info-circle me-2"></i>How to connect:</h6>
-                <ol class="mb-0 text-start">
-                  <li>Open WhatsApp on your phone</li>
-                  <li>Go to Settings > Linked Devices</li>
-                  <li>Tap "Link a Device"</li>
-                  <li>Scan this QR code</li>
-                </ol>
-              </div>
-              <small class="text-muted d-block">
-                <i class="fas fa-clock me-1"></i>Generated: ${timestamp}
-              </small>
-              <div class="mt-3">
-                <button class="btn btn-outline-primary btn-sm" onclick="refreshAccountQR('${phoneId}')">
-                  <i class="fas fa-sync-alt me-1"></i>Refresh QR
-                </button>
-                <button class="btn btn-outline-success btn-sm ms-2" onclick="checkAccountStatus('${phoneId}')">
-                  <i class="fas fa-check me-1"></i>Check Status
-                </button>
-              </div>
+              <p class="fw-bold text-success mb-3">
+                <i class="fas fa-mobile-alt me-2"></i>Scan this QR code with WhatsApp
+              </p>
+              <img src="${data.qr_code}" alt="QR Code" class="img-fluid mb-3" style="max-width: 250px;">
+              <p class="small text-muted">Status: ${data.status}</p>
+              <button class="btn btn-outline-primary btn-sm" onclick="showQR('${phoneId}')">
+                <i class="fas fa-sync-alt me-1"></i>Refresh QR
+              </button>
             </div>
           `;
-          
-          // Auto-refresh QR every 30 seconds
-          if (qrIntervals.has(phoneId)) {
-            clearInterval(qrIntervals.get(phoneId));
-          }
-          const interval = setInterval(() => refreshAccountQR(phoneId), 30000);
-          qrIntervals.set(phoneId, interval);
-          
+        } else if (data.authenticated) {
+          qrContent.innerHTML = `
+            <div class="alert alert-success text-center">
+              <i class="fas fa-check-circle fa-2x mb-2"></i>
+              <h6>Account Already Authenticated!</h6>
+              <p class="mb-0">Phone: ${data.phone_number || 'Unknown'}</p>
+            </div>
+          `;
         } else if (response.status === 202 && data.retry_after) {
-          // Session is being initialized, retry after delay
           if (retryCount < maxRetries) {
             const nextRetry = retryCount + 1;
-            const progressPercent = (nextRetry / maxRetries) * 100;
-            
-            qrDisplay.innerHTML = `
-              <div class="text-center text-info">
-                <i class="fas fa-sync-alt fa-spin fa-2x mb-3"></i>
-                <h5>Initializing Session</h5>
-                <p>${data.message || 'Setting up WhatsApp session...'}</p>
-                <small class="text-muted d-block mb-2">Attempt ${nextRetry}/${maxRetries} - Retrying in ${data.retry_after} seconds...</small>
-                <div class="progress" style="height: 8px; max-width: 300px; margin: 0 auto;">
-                  <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" 
-                       role="progressbar" style="width: ${progressPercent}%"></div>
+            qrContent.innerHTML = `
+              <div class="alert alert-warning text-center">
+                <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                <h6>${data.message}</h6>
+                <p class="small mb-2">Attempt ${nextRetry}/${maxRetries} - Retrying in ${data.retry_after} seconds...</p>
+                <div class="progress" style="height: 6px;">
+                  <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" 
+                       role="progressbar" style="width: ${(nextRetry/maxRetries)*100}%"></div>
                 </div>
               </div>
             `;
-            
-            // Auto-retry after the specified delay
-            setTimeout(() => {
-              showAccountQR(phoneId, nextRetry);
-            }, data.retry_after * 1000);
+            setTimeout(() => showQR(phoneId, nextRetry), data.retry_after * 1000);
           } else {
-            qrDisplay.innerHTML = `
-              <div class="text-center text-danger">
-                <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
-                <h5>Timeout</h5>
-                <p>QR code generation took too long. The session might need to be restarted.</p>
-                <button class="btn btn-primary me-2" onclick="showAccountQR('${phoneId}', 0)">
-                  <i class="fas fa-retry me-1"></i>Try Again
-                </button>
-                <button class="btn btn-warning" onclick="restartAccount('${phoneId}')">
-                  <i class="fas fa-sync-alt me-1"></i>Restart Session
-                </button>
+            qrContent.innerHTML = `
+              <div class="alert alert-danger text-center">
+                <i class="fas fa-times-circle fa-2x mb-2"></i>
+                <h6>Timeout</h6>
+                <p>QR code generation took too long.</p>
+                <div class="d-flex gap-2 justify-content-center">
+                  <button class="btn btn-primary btn-sm" onclick="showQR('${phoneId}', 0)">
+                    <i class="fas fa-redo me-1"></i>Try Again
+                  </button>
+                  <button class="btn btn-warning btn-sm" onclick="restartAccount('${phoneId}')">
+                    <i class="fas fa-power-off me-1"></i>Restart Session
+                  </button>
+                </div>
               </div>
             `;
           }
-          
-        } else if (data.authenticated) {
-          qrDisplay.innerHTML = `
-            <div class="text-center text-success">
-              <i class="fas fa-check-circle fa-2x mb-3"></i>
-              <h5>Already Connected</h5>
-              <p>This account is already authenticated!</p>
-              <p class="text-muted">Phone: ${data.phone_number || 'Unknown'}</p>
-            </div>
-          `;
         } else {
-          qrDisplay.innerHTML = `
-            <div class="text-center text-warning">
-              <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
-              <h5>QR Code Not Available</h5>
-              <p>${data.message || 'Unable to generate QR code'}</p>
-              <button class="btn btn-warning" onclick="showAccountQR('${phoneId}', 0)">
-                <i class="fas fa-retry me-1"></i>Try Again
+          qrContent.innerHTML = `
+            <div class="alert alert-info text-center">
+              <i class="fas fa-hourglass-half fa-2x mb-2"></i>
+              <h6>Waiting for QR Code</h6>
+              <p class="mb-2">${data.message || 'Please wait...'}</p>
+              <button class="btn btn-primary btn-sm" onclick="showQR('${phoneId}', 0)">
+                <i class="fas fa-redo me-1"></i>Retry
               </button>
             </div>
           `;
         }
       } catch (error) {
-        qrDisplay.innerHTML = `
-          <div class="text-center text-danger">
-            <i class="fas fa-times-circle fa-2x mb-3"></i>
-            <h5>Error Loading QR Code</h5>
-            <p>${error.message}</p>
-            <button class="btn btn-danger" onclick="showAccountQR('${phoneId}', 0)">
-              <i class="fas fa-retry me-1"></i>Retry
+        qrContent.innerHTML = `
+          <div class="alert alert-danger text-center">
+            <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+            <h6>Error Loading QR Code</h6>
+            <p class="mb-2">${error.message}</p>
+            <button class="btn btn-primary btn-sm" onclick="showQR('${phoneId}', 0)">
+              <i class="fas fa-redo me-1"></i>Retry
             </button>
           </div>
         `;
-        log(`Error loading QR for ${phoneId}: ${error.message}`, 'error');
       }
     }
 
-    async function refreshAccountQR(phoneId) {
-      if (selectedAccount === phoneId) {
-        await showAccountQR(phoneId, 0);
-      }
-    }
-
+    // Restart account
     async function restartAccount(phoneId) {
-      if (!confirm(`⚠️ Are you sure you want to restart the session for ${phoneId}?`)) {
-        return;
-      }
-
-      try {
-        const response = await fetch(`/api/accounts/${phoneId}/refresh`, {
-          method: 'POST'
-        });
-        const data = await response.json();
-
-        if (data.success) {
-          log(`Session restarted for ${phoneId}`, 'success');
-          showNotification(`✅ Session restarted for ${phoneId}`, 'success');
-          
-          // Wait a moment then show QR
-          setTimeout(() => {
-            showAccountQR(phoneId, 0);
-          }, 2000);
-        } else {
-          log(`Error restarting session: ${data.message}`, 'error');
-          showNotification(`❌ ${data.message}`, 'danger');
-        }
-      } catch (error) {
-        log(`Error restarting session: ${error.message}`, 'error');
-        showNotification(`❌ Error: ${error.message}`, 'danger');
-      }
-    }
-
-    async function checkAccountStatus(phoneId) {
-      try {
-        // This would require a new endpoint to check individual account status
-        log(`Checking status for ${phoneId}`, 'info');
-        showNotification(`🔄 Checking status for ${phoneId}...`, 'info');
-        
-        // For now, refresh the accounts list
-        await loadAccounts();
-      } catch (error) {
-        log(`Error checking status for ${phoneId}: ${error.message}`, 'error');
-      }
-    }
-
-    async function deleteAccount(phoneId) {
-      if (!confirm(`⚠️ Are you sure you want to delete account '${phoneId}'?\n\nThis action cannot be undone and will:\n• Remove the account permanently\n• Clear all associated data\n• Disconnect the WhatsApp session`)) {
-        return;
-      }
-
-      try {
-        const response = await fetch(`/api/accounts/${phoneId}`, {
-          method: 'DELETE'
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          log(`Account deleted: ${phoneId}`, 'success');
-          showNotification(`✅ Account '${phoneId}' deleted successfully`, 'success');
-          
-          // Clear QR if this was the selected account
-          if (selectedAccount === phoneId) {
-            selectedAccount = null;
-            document.getElementById('qrDisplay').innerHTML = `
-              <div class="text-center text-muted">
-                <i class="fas fa-mobile-alt fa-3x mb-3 opacity-50"></i>
-                <h5>Account Deleted</h5>
-                <p class="mb-0">Select another account to show its QR code</p>
-              </div>
-            `;
-          }
-          
-          // Clear QR interval
-          if (qrIntervals.has(phoneId)) {
-            clearInterval(qrIntervals.get(phoneId));
-            qrIntervals.delete(phoneId);
-          }
-          
-          // Refresh accounts list
-          await loadAccounts();
-          
-        } else {
-          log(`Failed to delete account: ${data.error}`, 'error');
-          showNotification(`❌ ${data.error || 'Failed to delete account'}`, 'danger');
-        }
-      } catch (error) {
-        log(`Error deleting account: ${error.message}`, 'error');
-        showNotification(`❌ Error: ${error.message}`, 'danger');
-      }
-    }
-
-    // Legacy account functions
-    async function checkLegacyStatus() {
-      try {
-        const response = await fetch('/status');
-        const data = await response.json();
-        
-        const badge = document.getElementById('legacyStatusBadge');
-        if (data.legacy_client && data.legacy_client.ready) {
-          badge.innerHTML = '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Connected</span>';
-        } else {
-          badge.innerHTML = '<span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Waiting for QR</span>';
-        }
-        
-        log(`Legacy status: ${data.legacy_client?.ready ? 'Connected' : 'Not connected'}`, 'info');
-      } catch (error) {
-        log(`Error checking legacy status: ${error.message}`, 'error');
-      }
-    }
-
-    async function showLegacyQR() {
-      selectedAccount = 'legacy';
-      const qrDisplay = document.getElementById('qrDisplay');
+      if (!confirm(`Are you sure you want to restart the session for ${phoneId}?`)) return;
       
-      qrDisplay.innerHTML = `
-        <div class="text-center">
-          <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
-          <h5>Loading Legacy QR Code</h5>
-          <p class="text-muted">Loading QR code for legacy account...</p>
+      try {
+        const response = await fetch(`/api/accounts/${phoneId}/restart`, { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.success) {
+          showAlert('Account restarted successfully!', 'success');
+          loadAccounts();
+          loadSystemStatus();
+        } else {
+          showAlert(`Error: ${data.message}`, 'danger');
+        }
+      } catch (error) {
+        showAlert(`Error restarting account: ${error.message}`, 'danger');
+      }
+    }
+
+    // Delete account
+    async function deleteAccount(phoneId) {
+      if (!confirm(`Are you sure you want to DELETE the account ${phoneId}? This action cannot be undone.`)) return;
+      
+      try {
+        const response = await fetch(`/api/accounts/${phoneId}`, { method: 'DELETE' });
+        const data = await response.json();
+        
+        if (data.success) {
+          showAlert('Account deleted successfully!', 'success');
+          loadAccounts();
+          loadSystemStatus();
+        } else {
+          showAlert(`Error: ${data.message}`, 'danger');
+        }
+      } catch (error) {
+        showAlert(`Error deleting account: ${error.message}`, 'danger');
+      }
+    }
+
+    // Create account form submission
+    document.getElementById('createAccountForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
+      submitBtn.disabled = true;
+      
+      const formData = new FormData(e.target);
+      const accountData = {
+        phone_id: formData.get('phoneId'),
+        name: formData.get('accountName'),
+        webhook_url: formData.get('webhookUrl')
+      };
+      
+      // Remove empty fields
+      Object.keys(accountData).forEach(key => {
+        if (!accountData[key]) delete accountData[key];
+      });
+      
+      try {
+        const response = await fetch('/api/accounts/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(accountData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showAlert(`Account created successfully!<br><strong>Phone ID:</strong> ${data.account.phone_id}<br><strong>Token:</strong> ${data.account.token}<br><br><em>Save the token - you'll need it for API calls!</em>`, 'success', 8000);
+          e.target.reset();
+          loadAccounts();
+          loadSystemStatus();
+        } else {
+          showAlert(`Error: ${data.message}`, 'danger');
+        }
+      } catch (error) {
+        showAlert(`Error creating account: ${error.message}`, 'danger');
+      } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      }
+    });
+
+    // Utility functions
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatDate(dateString) {
+      if (!dateString) return 'Never';
+      return new Date(dateString).toLocaleString();
+    }
+
+    function getStatusIcon(status) {
+      switch(status) {
+        case 'connected': return 'fa-check-circle';
+        case 'pending': return 'fa-clock';
+        case 'disconnected': return 'fa-times-circle';
+        case 'failed': return 'fa-exclamation-circle';
+        default: return 'fa-question-circle';
+      }
+    }
+
+    function showAlert(message, type = 'info', duration = 5000) {
+      const alertContainer = document.createElement('div');
+      alertContainer.className = 'position-fixed top-0 start-50 translate-middle-x mt-3';
+      alertContainer.style.zIndex = '9999';
+      
+      alertContainer.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show shadow" role="alert" style="min-width: 400px;">
+          <i class="fas fa-${type === 'success' ? 'check' : type === 'danger' ? 'times' : 'info'}-circle me-2"></i>
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
       `;
-
-      try {
-        const response = await fetch('/qr');
-        const data = await response.json();
-
-        if (data.authenticated) {
-          qrDisplay.innerHTML = `
-            <div class="text-center text-success">
-              <i class="fas fa-check-circle fa-3x mb-3"></i>
-              <h5>Legacy Account Connected</h5>
-              <p class="text-muted">Your legacy WhatsApp account is already connected</p>
-            </div>
-          `;
-        } else if (data.qr) {
-          const timestamp = new Date().toLocaleTimeString();
-          qrDisplay.innerHTML = `
-            <div class="text-center">
-              <h5 class="mb-3">
-                <i class="fas fa-history me-2 text-primary"></i>Legacy Account
-              </h5>
-              <img src="${data.qr}" class="img-fluid border rounded shadow-sm mb-3" 
-                   alt="Legacy QR Code" style="max-width: 300px;">
-              <div class="alert alert-warning mb-3">
-                <h6><i class="fas fa-info-circle me-2"></i>Legacy Account:</h6>
-                <p class="mb-0">This is the original single-account system for backward compatibility</p>
-              </div>
-              <small class="text-muted d-block">
-                <i class="fas fa-clock me-1"></i>Generated: ${timestamp}
-              </small>
-            </div>
-          `;
+      
+      document.body.appendChild(alertContainer);
+      
+      setTimeout(() => {
+        if (alertContainer.parentNode) {
+          alertContainer.remove();
         }
-      } catch (error) {
-        qrDisplay.innerHTML = `
-          <div class="text-center text-danger">
-            <i class="fas fa-times-circle fa-2x mb-3"></i>
-            <h5>Error Loading Legacy QR</h5>
-            <p>${error.message}</p>
-          </div>
-        `;
-        log(`Error loading legacy QR: ${error.message}`, 'error');
-      }
+      }, duration);
     }
 
-    async function logoutLegacy() {
-      if (!confirm('⚠️ Are you sure you want to logout the legacy account?')) {
-        return;
-      }
+    // Auto-refresh every 30 seconds
+    setInterval(() => {
+      loadSystemStatus();
+      loadAccounts();
+    }, 30000);
 
-      try {
-        const response = await fetch('/account/logout', { method: 'POST' });
-        if (response.ok) {
-          log('Legacy account logged out', 'success');
-          showNotification('✅ Legacy account logged out', 'success');
-          await checkLegacyStatus();
-        }
-      } catch (error) {
-        log(`Error logging out legacy account: ${error.message}`, 'error');
-      }
-    }
-
-    // Event listeners
-    document.getElementById('createAccountForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      createAccount();
-    });
-
-    document.getElementById('refreshAccountsBtn').addEventListener('click', loadAccounts);
-    document.getElementById('btnLegacyStatus').addEventListener('click', checkLegacyStatus);
-    document.getElementById('btnLegacyQR').addEventListener('click', showLegacyQR);
-    document.getElementById('btnLegacyLogout').addEventListener('click', logoutLegacy);
-
-    // Initialize
-    document.addEventListener('DOMContentLoaded', async () => {
-      log('Multi-Phone Account Manager initialized', 'success');
-      await loadAccounts();
-      await checkLegacyStatus();
-    });
-
-    // Cleanup intervals on page unload
-    window.addEventListener('beforeunload', () => {
-      qrIntervals.forEach(interval => clearInterval(interval));
-    });
+    // Initial load
+    loadSystemStatus();
+    loadAccounts();
   </script>
+</body>
+</html>
+
+    <script>
+        // Load system status
+        async function loadSystemStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('systemStatus');
+                statusDiv.innerHTML = `
+                    <div><strong>Total Accounts:</strong> ${data.multi_account.total_accounts}</div>
+                    <div><strong>Connected:</strong> ${data.multi_account.connected_accounts}</div>
+                    <div><strong>Pending:</strong> ${data.multi_account.pending_accounts}</div>
+                    <div><strong>Legacy Client:</strong> <span class="status-badge ${data.legacy_client.ready ? 'status-connected' : 'status-pending'}">${data.legacy_client.ready ? 'Connected' : 'Pending'}</span></div>
+                `;
+            } catch (error) {
+                console.error('Error loading system status:', error);
+                document.getElementById('systemStatus').innerHTML = '<div style="color: red;">Error loading status</div>';
+            }
+        }
+
+        // Load accounts list
+        async function loadAccounts() {
+            try {
+                const response = await fetch('/api/accounts');
+                const data = await response.json();
+                
+                const accountsList = document.getElementById('accountsList');
+                
+                if (data.accounts.length === 0) {
+                    accountsList.innerHTML = '<div>No accounts created yet. Create your first account above!</div>';
+                    return;
+                }
+                
+                accountsList.innerHTML = data.accounts.map(account => `
+                    <div class="account-card ${account.status}">
+                        <div style="display: flex; justify-content: between; align-items: center;">
+                            <div>
+                                <h3>${account.name || account.phone_id}</h3>
+                                <div><strong>Phone ID:</strong> ${account.phone_id}</div>
+                                <div><strong>Phone Number:</strong> ${account.phone_number || 'Not authenticated'}</div>
+                                <div><strong>Status:</strong> <span class="status-badge status-${account.status}">${account.status.toUpperCase()}</span></div>
+                                <div><strong>Last Activity:</strong> ${account.last_activity ? new Date(account.last_activity).toLocaleString() : 'Never'}</div>
+                                <div><strong>Session Ready:</strong> ${account.session.ready ? '✅' : '❌'}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <button class="btn btn-primary" onclick="showQR('${account.phone_id}')">📱 QR Code</button>
+                                <button class="btn btn-warning" onclick="restartAccount('${account.phone_id}')">🔄 Restart</button>
+                                <button class="btn btn-danger" onclick="deleteAccount('${account.phone_id}')">🗑️ Delete</button>
+                            </div>
+                        </div>
+                        <div id="qr-${account.phone_id}" class="hidden">
+                            <div id="qr-content-${account.phone_id}">Loading QR code...</div>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <details>
+                                <summary>API Usage for this account</summary>
+                                <div class="api-example">Headers for API calls:
+phone_id: ${account.phone_id}
+token: ${account.id ? '[Get from account creation response]' : 'Account token here'}
+
+Example:
+curl -X POST http://localhost:3000/api/v2/send-message \\
+  -H "Content-Type: application/json" \\
+  -H "phone_id: ${account.phone_id}" \\
+  -H "token: YOUR_TOKEN_HERE" \\
+  -d '{"to": "1234567890", "message": "Hello!"}'</div>
+                            </details>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading accounts:', error);
+                document.getElementById('accountsList').innerHTML = '<div style="color: red;">Error loading accounts</div>';
+            }
+        }
+
+        // Show QR code for account
+        async function showQR(phoneId, retryCount = 0) {
+            const qrDiv = document.getElementById(`qr-${phoneId}`);
+            const qrContent = document.getElementById(`qr-content-${phoneId}`);
+            const maxRetries = 10; // Maximum number of retries
+            
+            if (qrDiv.classList.contains('hidden')) {
+                qrDiv.classList.remove('hidden');
+            }
+            
+            qrContent.innerHTML = '⏳ Loading QR code...';
+            
+            try {
+                const response = await fetch(`/api/accounts/${phoneId}/qr`);
+                const data = await response.json();
+                
+                if (data.success && data.qr_code) {
+                    qrContent.innerHTML = `
+                        <div>
+                            <p>📱 Scan this QR code with WhatsApp:</p>
+                            <img src="${data.qr_code}" alt="QR Code" class="qr-code">
+                            <p><small>Status: ${data.status}</small></p>
+                            <button class="btn btn-warning btn-sm" onclick="showQR('${phoneId}')">🔄 Refresh QR</button>
+                        </div>
+                    `;
+                } else if (data.authenticated) {
+                    qrContent.innerHTML = `
+                        <div style="color: green;">
+                            ✅ Account is already authenticated!<br>
+                            Phone: ${data.phone_number || 'Unknown'}
+                        </div>
+                    `;
+                } else if (response.status === 202 && data.retry_after) {
+                    // Session is being initialized, retry after delay
+                    if (retryCount < maxRetries) {
+                        const nextRetry = retryCount + 1;
+                        qrContent.innerHTML = `
+                            <div style="color: orange;">
+                                🔄 ${data.message}<br>
+                                <small>Attempt ${nextRetry}/${maxRetries} - Retrying in ${data.retry_after} seconds...</small>
+                                <br><br>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" 
+                                         role="progressbar" style="width: ${(nextRetry/maxRetries)*100}%"></div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Auto-retry after the specified delay
+                        setTimeout(() => {
+                            showQR(phoneId, nextRetry);
+                        }, data.retry_after * 1000);
+                    } else {
+                        qrContent.innerHTML = `
+                            <div style="color: red;">
+                                ❌ Timeout: QR code generation took too long.<br>
+                                <button class="btn btn-primary" onclick="showQR('${phoneId}', 0)">🔄 Try Again</button>
+                                <button class="btn btn-warning" onclick="restartAccount('${phoneId}')">🔄 Restart Session</button>
+                            </div>
+                        `;
+                    }
+                } else {
+                    qrContent.innerHTML = `
+                        <div style="color: orange;">⏳ ${data.message || 'Waiting for QR code...'}</div>
+                        <button class="btn btn-primary" onclick="showQR('${phoneId}', 0)">🔄 Retry</button>
+                    `;
+                }
+            } catch (error) {
+                qrContent.innerHTML = `
+                    <div style="color: red;">
+                        ❌ Error loading QR code: ${error.message}<br>
+                        <button class="btn btn-primary" onclick="showQR('${phoneId}', 0)">🔄 Retry</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Restart account
+        async function restartAccount(phoneId) {
+            if (!confirm(`Are you sure you want to restart the session for ${phoneId}?`)) return;
+            
+            try {
+                const response = await fetch(`/api/accounts/${phoneId}/restart`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Account restarted successfully!');
+                    loadAccounts();
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            } catch (error) {
+                alert(`Error restarting account: ${error.message}`);
+            }
+        }
+
+        // Delete account
+        async function deleteAccount(phoneId) {
+            if (!confirm(`Are you sure you want to DELETE the account ${phoneId}? This action cannot be undone.`)) return;
+            
+            try {
+                const response = await fetch(`/api/accounts/${phoneId}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Account deleted successfully!');
+                    loadAccounts();
+                    loadSystemStatus();
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            } catch (error) {
+                alert(`Error deleting account: ${error.message}`);
+            }
+        }
+
+        // Create account form submission
+        document.getElementById('createAccountForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const accountData = {
+                phone_id: formData.get('phoneId'),
+                name: formData.get('accountName'),
+                webhook_url: formData.get('webhookUrl')
+            };
+            
+            // Remove empty fields
+            Object.keys(accountData).forEach(key => {
+                if (!accountData[key]) delete accountData[key];
+            });
+            
+            try {
+                const response = await fetch('/api/accounts/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(accountData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`Account created successfully!\n\nPhone ID: ${data.account.phone_id}\nToken: ${data.account.token}\n\nSave the token - you'll need it for API calls!`);
+                    e.target.reset();
+                    loadAccounts();
+                    loadSystemStatus();
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            } catch (error) {
+                alert(`Error creating account: ${error.message}`);
+            }
+        });
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            loadSystemStatus();
+            loadAccounts();
+        }, 30000);
+
+        // Initial load
+        loadSystemStatus();
+        loadAccounts();
+    </script>
 </body>
 </html>

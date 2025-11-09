@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation & Tester - WhatsApp Automation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/styles/app.css">
+    <style>
+        .method-badge {
+            font-weight: 600;
+            font-size: 0.75rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            color: white;
+            display: inline-block;
+            margin-right: 0.75rem;
+            min-width: 60px;
+            text-align: center;
+        }
+        .method-post { background-color: #49cc90; }
+        .method-get { background-color: #61affe; }
+        .method-delete { background-color: #f93e3e; }
+        .method-put { background-color: #fca130; }
+        
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        
+        .code-block.dark {
+            background: #2d3748;
+            color: #e2e8f0;
+            border-color: #4a5568;
+        }
+        
+        .api-endpoint-card {
+            margin-bottom: 1.5rem;
+            transition: all 0.15s ease-in-out;
+        }
+        
+        .api-endpoint-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        }
+        
+        .sidebar {
+            position: sticky;
+            top: 2rem;
+            max-height: calc(100vh - 4rem);
+            overflow-y: auto;
+        }
+        
+        .nav-section {
+            margin-bottom: 1rem;
+        }
+        
+        .nav-section-title {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-link-custom {
+            color: #6c757d;
+            text-decoration: none;
+            padding: 0.25rem 0;
+            display: block;
+            font-size: 0.875rem;
+            transition: color 0.15s ease-in-out;
+        }
+        
+        .nav-link-custom:hover,
+        .nav-link-custom.active {
+            color: #25d366;
+        }
+        
+        .tester-form {
+            background: #f8f9fa;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .account-table {
+            font-size: 0.875rem;
+        }
+        
+        .account-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            border-top: none;
+        }
+        
+        .token-input {
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+        }
+        
+        .response-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        @media (max-width: 992px) {
+            .sidebar {
+                position: static;
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">
+        <i class="fab fa-whatsapp"></i>WA Automation
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="index.html"><i class="fas fa-home me-2"></i>Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="account.html"><i class="fas fa-user-circle me-2"></i>Account</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="group-management.html"><i class="fas fa-users me-2"></i>Groups</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="api-documentation.html"><i class="fas fa-book me-2"></i>API Docs</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1><i class="fas fa-code"></i>API Documentation & Tester</h1>
+          <p>Complete API reference and interactive testing interface</p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-primary" onclick="loadAccounts()">
+            <i class="fas fa-sync-alt me-2"></i>Refresh Accounts
+          </button>
+          <a href="account.html" class="btn btn-whatsapp">
+            <i class="fas fa-plus me-2"></i>Create Account
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Sidebar Navigation -->
+      <div class="col-lg-3">
+        <div class="sidebar">
+          <div class="card">
+            <div class="card-header">
+              <i class="fas fa-list me-2"></i>Quick Navigation
+            </div>
+            <div class="card-body">
+              <div class="nav-section">
+                <div class="nav-section-title">Getting Started</div>
+                <a href="#api-keys" class="nav-link-custom">API Key Management</a>
+                <a href="#api-tester" class="nav-link-custom">API Tester</a>
+              </div>
+              <div class="nav-section">
+                <div class="nav-section-title">API Groups</div>
+                <a href="#account-management" class="nav-link-custom">Account Management</a>
+                <a href="#messaging" class="nav-link-custom">Messaging</a>
+                <a href="#group-management" class="nav-link-custom">Group Management</a>
+                <a href="#data-retrieval" class="nav-link-custom">Data Retrieval</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="col-lg-9">
+        <!-- API Key Management -->
+        <section id="api-keys" class="mb-5">
+          <div class="card">
+            <div class="card-header">
+              <i class="fas fa-key me-2"></i>API Key Management
+            </div>
+            <div class="card-body">
+              <p class="text-muted mb-4">API keys (tokens) are linked to WhatsApp accounts (phone IDs). Create an account to get a token.</p>
+              
+              <!-- Accounts Table -->
+              <div class="mb-4">
+                <h6 class="fw-bold">Existing Accounts</h6>
+                <div id="accountList">
+                  <div class="d-flex justify-content-center py-3">
+                    <div class="spinner-border text-primary me-2" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span class="text-muted">Loading accounts...</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Create Account Form -->
+              <div class="row">
+                <div class="col-md-6">
+                  <h6 class="fw-bold mb-3">Create New Account & API Key</h6>
+                  <form id="createAccountForm">
+                    <div class="mb-3">
+                      <label for="phoneId" class="form-label">Phone ID <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" id="phoneId" placeholder="e.g., my_business_phone" required>
+                      <div class="form-text">Unique identifier for your account</div>
+                    </div>
+                    <div class="mb-3">
+                      <label for="accountName" class="form-label">Account Name</label>
+                      <input type="text" class="form-control" id="accountName" placeholder="e.g., My Business">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                      <i class="fas fa-plus me-2"></i>Create Account
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- API Tester -->
+        <section id="api-tester" class="mb-5">
+          <div class="card">
+            <div class="card-header">
+              <i class="fas fa-flask me-2"></i>Interactive API Tester
+            </div>
+            <div class="card-body">
+              <div class="tester-form">
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <label for="apiEndpoint" class="form-label">Select Endpoint</label>
+                    <select class="form-select" id="apiEndpoint" onchange="updateApiTesterForm()">
+                      <option value="">Choose an endpoint...</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="testerPhoneId" class="form-label">Phone ID</label>
+                    <select class="form-select" id="testerPhoneId">
+                      <option value="">Select account...</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="testerToken" class="form-label">API Token</label>
+                    <input type="password" class="form-control token-input" id="testerToken" placeholder="Enter token">
+                  </div>
+                </div>
+                
+                <div id="apiTesterParams"></div>
+                
+                <div class="d-flex gap-2">
+                  <button class="btn btn-success" onclick="sendApiRequest()">
+                    <i class="fas fa-paper-plane me-2"></i>Send Request
+                  </button>
+                  <button class="btn btn-outline-secondary" onclick="clearResponse()">
+                    <i class="fas fa-broom me-2"></i>Clear Response
+                  </button>
+                </div>
+              </div>
+              
+              <h6 class="fw-bold mb-3">API Response</h6>
+              <div class="response-container">
+                <pre id="apiResponse" class="code-block">Awaiting request...</pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- API Documentation -->
+        <section id="api-documentation">
+          <div class="card">
+            <div class="card-header">
+              <i class="fas fa-book-open me-2"></i>Complete API Documentation
+            </div>
+            <div class="card-body">
+              <div id="apiDocumentation">
+                <div class="d-flex justify-content-center py-5">
+                  <div class="spinner-border text-primary me-2" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <span class="text-muted">Loading documentation...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+  
+  <!-- Footer -->
+  <footer class="text-center py-4 mt-5">
+    <div class="container">
+      <p class="text-muted mb-0">
+        <i class="fab fa-whatsapp me-2"></i>&copy; <span id="year"></span> WhatsApp Automation Platform
+      </p>
+    </div>
+  </footer>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    const apiEndpoints = [
+      // Account Management
+      { group: 'Account Management', method: 'POST', path: '/api/accounts/create', description: 'Create a new WhatsApp account and get an API token.', params: [ { name: 'phone_id', type: 'string', required: true }, { name: 'name', type: 'string', required: false }, { name: 'webhook_url', type: 'string', required: false } ] },
+      { group: 'Account Management', method: 'GET', path: '/api/accounts', description: 'Get a list of all configured WhatsApp accounts.', params: [] },
+      { group: 'Account Management', method: 'GET', path: '/api/accounts/:phoneId/qr', description: 'Get a QR code to authenticate a session.', pathParams: ['phoneId'], params: [] },
+      { group: 'Account Management', method: 'POST', path: '/api/accounts/:phoneId/restart', description: 'Restart a session for a specific account.', pathParams: ['phoneId'], params: [] },
+      { group: 'Account Management', method: 'DELETE', path: '/api/accounts/:phoneId', description: 'Delete a WhatsApp account and its session.', pathParams: ['phoneId'], params: [] },
+      
+      // Messaging
+      { group: 'Messaging', method: 'POST', path: '/api/v2/send-message', description: 'Send a text message.', params: [ { name: 'to', type: 'string', required: true, placeholder: 'CountryCodePhoneNumber' }, { name: 'message', type: 'string', required: true } ] },
+      { group: 'Messaging', method: 'POST', path: '/api/v2/send-media', description: 'Send a media file (image, video, document). Use multipart/form-data.', params: [ { name: 'to', type: 'string', required: true }, { name: 'caption', type: 'string', required: false }, { name: 'file', type: 'file', required: true } ] },
+      { group: 'Messaging', method: 'POST', path: '/api/v2/send-file-by-url', description: 'Send a file from a URL.', params: [ { name: 'to', type: 'string', required: true }, { name: 'url', type: 'string', required: true }, { name: 'caption', type: 'string', required: false } ] },
+      { group: 'Messaging', method: 'POST', path: '/api/v2/send-location', description: 'Send a location.', params: [ { name: 'to', type: 'string', required: true }, { name: 'latitude', type: 'number', required: true }, { name: 'longitude', type: 'number', required: true }, { name: 'description', type: 'string', required: false } ] },
+      { group: 'Messaging', method: 'POST', path: '/api/v2/send-reaction', description: 'Send a reaction to a message.', params: [ { name: 'to', type: 'string', required: true }, { name: 'messageId', type: 'string', required: true }, { name: 'reaction', type: 'string', required: true, placeholder: '👍' } ] },
+      { group: 'Messaging', method: 'POST', path: '/api/v2/forward-messages', description: 'Forward one or more messages to a chat.', params: [ { name: 'to', type: 'string', required: true }, { name: 'messageIds', type: 'array', required: true } ] },
+      { group: 'Messaging', method: 'POST', path: '/api/v2/mark-read', description: 'Mark a chat as read.', params: [ { name: 'chatId', type: 'string', required: true, placeholder: 'PhoneNumber@c.us or GroupID@g.us' } ] },
+
+      // Group Management
+      { group: 'Group Management', method: 'POST', path: '/api/v2/create-group', description: 'Create a new group.', params: [ { name: 'name', type: 'string', required: true }, { name: 'participants', type: 'array', required: true, placeholder: '["PhoneNumber1", "PhoneNumber2"]' } ] },
+      { group: 'Group Management', method: 'GET', path: '/api/v2/groups', description: 'Get a list of all groups.', params: [] },
+      { group: 'Group Management', method: 'GET', path: '/api/v2/groups/data/:groupId', description: 'Get detailed information about a specific group.', pathParams: ['groupId'], params: [] },
+      { group: 'Group Management', method: 'POST', path: '/api/v2/groups/add-participant', description: 'Add a participant to a group.', params: [ { name: 'groupId', type: 'string', required: true }, { name: 'participant', type: 'string', required: true } ] },
+      { group: 'Group Management', method: 'POST', path: '/api/v2/groups/remove-participant', description: 'Remove a participant from a group.', params: [ { name: 'groupId', type: 'string', required: true }, { name: 'participant', type: 'string', required: true } ] },
+      { group: 'Group Management', method: 'POST', path: '/api/v2/groups/set-admin', description: 'Promote a participant to a group admin.', params: [ { name: 'groupId', type: 'string', required: true }, { name: 'participant', type: 'string', required: true } ] },
+      { group: 'Group Management', method: 'POST', path: '/api/v2/groups/remove-admin', description: 'Demote a group admin.', params: [ { name: 'groupId', type: 'string', required: true }, { name: 'participant', type: 'string', required: true } ] },
+      { group: 'Group Management', method: 'POST', path: '/api/v2/groups/update-name', description: 'Update a group name.', params: [ { name: 'groupId', type: 'string', required: true }, { name: 'name', type: 'string', required: true } ] },
+      { group: 'Group Management', method: 'POST', path: '/api/v2/groups/leave', description: 'Leave a group.', params: [ { name: 'groupId', type: 'string', required: true } ] },
+
+      // Data Retrieval
+      { group: 'Data Retrieval', method: 'GET', path: '/api/v2/contacts', description: 'Get a list of all contacts.', params: [] },
+      { group: 'Data Retrieval', method: 'GET', path: '/api/v2/chats', description: 'Get a list of all chats.', params: [] },
+      { group: 'Data Retrieval', method: 'GET', path: '/api/v2/account/info', description: 'Get information about the authenticated account.', params: [] },
+    ];
+
+    function populateApiDocumentation() {
+      const docContainer = document.getElementById('apiDocumentation');
+      let html = '';
+      const groups = {};
+
+      apiEndpoints.forEach(endpoint => {
+        if (!groups[endpoint.group]) {
+          groups[endpoint.group] = [];
+        }
+        groups[endpoint.group].push(endpoint);
+      });
+
+      for (const groupName in groups) {
+        html += `<div id="${groupName.toLowerCase().replace(/\s+/g, '-')}" class="mb-4">`;
+        html += `<h4 class="fw-bold text-primary mb-3">${groupName}</h4>`;
+        
+        groups[groupName].forEach(endpoint => {
+          html += `
+            <div class="api-endpoint-card card mb-3">
+              <div class="card-body">
+                <h5 class="card-title">
+                  <span class="method-badge method-${endpoint.method.toLowerCase()}">${endpoint.method}</span>
+                  <code class="text-dark">${endpoint.path}</code>
+                </h5>
+                <p class="card-text text-muted">${endpoint.description}</p>
+                ${endpoint.params.length > 0 ? `
+                <div class="mb-3">
+                  <h6 class="fw-bold">Parameters:</h6>
+                  <ul class="list-unstyled">
+                    ${endpoint.params.map(p => `<li class="mb-1"><code class="text-primary">${p.name}</code> <span class="badge bg-secondary">${p.type}</span> ${p.required ? '<span class="badge bg-danger">Required</span>' : '<span class="badge bg-info">Optional</span>'}</li>`).join('')}
+                  </ul>
+                </div>` : ''}
+                <div class="code-block dark">curl -X ${endpoint.method} http://localhost:3000${endpoint.path} \\
+-H "Content-Type: application/json" \\
+-H "phone_id: YOUR_PHONE_ID" \\
+-H "token: YOUR_API_TOKEN"${endpoint.method === 'POST' ? ` \\
+-d '${JSON.stringify(Object.fromEntries(endpoint.params.filter(p => p.type !== 'file').map(p => [p.name, p.placeholder || p.type])), null, 2)}'` : ''}</div>
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+      }
+      docContainer.innerHTML = html;
+    }
+
+    function populateApiTesterDropdown() {
+      const select = document.getElementById('apiEndpoint');
+      apiEndpoints.forEach((endpoint, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = `${endpoint.method} ${endpoint.path}`;
+        select.appendChild(option);
+      });
+    }
+
+    function updateApiTesterForm() {
+      const selectedIndex = document.getElementById('apiEndpoint').value;
+      if (!selectedIndex) return;
+      
+      const endpoint = apiEndpoints[selectedIndex];
+      const paramsContainer = document.getElementById('apiTesterParams');
+      let html = '';
+
+      if (endpoint.pathParams) {
+        html += '<h6 class="fw-bold mb-2">Path Parameters</h6>';
+        endpoint.pathParams.forEach(p => {
+          html += `
+            <div class="mb-3">
+              <label for="param-${p}" class="form-label">${p} <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="param-${p}" placeholder="${p}">
+            </div>
+          `;
+        });
+      }
+
+      if (endpoint.params.length > 0) {
+        html += '<h6 class="fw-bold mb-2">Request Parameters</h6>';
+        endpoint.params.forEach(param => {
+          html += `<div class="mb-3">
+            <label for="param-${param.name}" class="form-label">${param.name} ${param.required ? '<span class="text-danger">*</span>' : ''}</label>`;
+          if (param.type === 'textarea' || param.name === 'message') {
+            html += `<textarea class="form-control" id="param-${param.name}" placeholder="${param.placeholder || ''}" rows="3"></textarea>`;
+          } else if (param.type === 'file') {
+            html += `<input type="file" class="form-control" id="param-${param.name}">`;
+          } else {
+            html += `<input type="text" class="form-control" id="param-${param.name}" placeholder="${param.placeholder || ''}">`;
+          }
+          html += `</div>`;
+        });
+      }
+      paramsContainer.innerHTML = html;
+    }
+
+    async function sendApiRequest() {
+      const selectedIndex = document.getElementById('apiEndpoint').value;
+      if (!selectedIndex) {
+        showAlert('Please select an endpoint', 'warning');
+        return;
+      }
+      
+      const endpoint = apiEndpoints[selectedIndex];
+      const phoneId = document.getElementById('testerPhoneId').value;
+      const token = document.getElementById('testerToken').value;
+      const responseContainer = document.getElementById('apiResponse');
+      
+      if (!phoneId || !token) {
+        showAlert('Please select a phone ID and enter token', 'warning');
+        return;
+      }
+      
+      responseContainer.textContent = 'Sending request...';
+
+      let path = endpoint.path;
+      if (endpoint.pathParams) {
+        endpoint.pathParams.forEach(p => {
+          const value = document.getElementById(`param-${p}`).value;
+          if (!value) {
+            showAlert(`Please enter ${p}`, 'warning');
+            return;
+          }
+          path = path.replace(`:${p}`, value);
+        });
+      }
+
+      const headers = {
+        'phone_id': phoneId,
+        'token': token
+      };
+
+      let body;
+      const options = {
+        method: endpoint.method,
+        headers: headers
+      };
+
+      const hasFileUpload = endpoint.params.some(p => p.type === 'file');
+
+      if (endpoint.method === 'POST' || endpoint.method === 'PUT') {
+        if (hasFileUpload) {
+          body = new FormData();
+          endpoint.params.forEach(param => {
+            if (param.type === 'file') {
+              const fileInput = document.getElementById(`param-${param.name}`);
+              if (fileInput.files.length > 0) {
+                body.append(param.name, fileInput.files[0]);
+              }
+            } else {
+              const value = document.getElementById(`param-${param.name}`).value;
+              if (value) body.append(param.name, value);
+            }
+          });
+        } else {
+          headers['Content-Type'] = 'application/json';
+          const rawBody = {};
+          endpoint.params.forEach(param => {
+            const value = document.getElementById(`param-${param.name}`).value;
+            if (value) {
+              if (param.type === 'array') {
+                try {
+                  rawBody[param.name] = JSON.parse(value);
+                } catch (e) {
+                  rawBody[param.name] = value.split(',').map(v => v.trim());
+                }
+              } else {
+                rawBody[param.name] = value;
+              }
+            }
+          });
+          body = JSON.stringify(rawBody);
+        }
+        options.body = body;
+      }
+      
+      if (hasFileUpload) {
+        delete options.headers['Content-Type'];
+      }
+
+      try {
+        const response = await fetch(path, options);
+        const data = await response.json();
+        responseContainer.textContent = JSON.stringify(data, null, 2);
+        
+        if (response.ok) {
+          showAlert('Request completed successfully', 'success');
+        } else {
+          showAlert(`Request failed: ${response.status}`, 'warning');
+        }
+      } catch (error) {
+        responseContainer.textContent = `Error: ${error.message}`;
+        showAlert(`Network error: ${error.message}`, 'danger');
+      }
+    }
+
+    function clearResponse() {
+      document.getElementById('apiResponse').textContent = 'Awaiting request...';
+    }
+
+    async function loadAccounts() {
+      const accountListDiv = document.getElementById('accountList');
+      const testerPhoneIdSelect = document.getElementById('testerPhoneId');
+      
+      accountListDiv.innerHTML = '<div class="d-flex justify-content-center py-2"><div class="spinner-border spinner-border-sm text-primary me-2"></div><span class="text-muted">Loading...</span></div>';
+      testerPhoneIdSelect.innerHTML = '<option value="">Select account...</option>';
+
+      try {
+        const response = await fetch('/api/accounts');
+        const data = await response.json();
+
+        if (!data.accounts || data.accounts.length === 0) {
+          accountListDiv.innerHTML = `
+            <div class="alert alert-info mb-0">
+              <i class="fas fa-info-circle me-2"></i>No accounts found. 
+              <a href="account.html" class="alert-link">Create one here</a>
+            </div>
+          `;
+          return;
+        }
+
+        let tableHtml = `
+          <div class="table-responsive">
+            <table class="table table-sm account-table">
+              <thead>
+                <tr>
+                  <th>Phone ID</th>
+                  <th>Name</th>
+                  <th>Token</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+        
+        data.accounts.forEach(acc => {
+          tableHtml += `
+            <tr>
+              <td><code class="small">${acc.phone_id}</code></td>
+              <td>${acc.name || '-'}</td>
+              <td>
+                <div class="input-group input-group-sm">
+                  <input type="password" class="form-control token-input" value="${acc.token}" readonly>
+                  <button class="btn btn-outline-secondary" type="button" onclick="toggleTokenVisibility(this)">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                </div>
+              </td>
+              <td>
+                <span class="badge bg-${acc.status === 'connected' ? 'success' : acc.status === 'pending' ? 'warning' : 'danger'}">
+                  ${acc.status}
+                </span>
+              </td>
+              <td>
+                <button class="btn btn-danger btn-sm" onclick="deleteAccount('${acc.phone_id}')">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+          
+          const option = document.createElement('option');
+          option.value = acc.phone_id;
+          option.textContent = `${acc.name || acc.phone_id} (${acc.status})`;
+          option.dataset.token = acc.token;
+          testerPhoneIdSelect.appendChild(option);
+        });
+        
+        tableHtml += '</tbody></table></div>';
+        accountListDiv.innerHTML = tableHtml;
+
+        testerPhoneIdSelect.onchange = () => {
+          const selectedOption = testerPhoneIdSelect.options[testerPhoneIdSelect.selectedIndex];
+          if (selectedOption.dataset.token) {
+            document.getElementById('testerToken').value = selectedOption.dataset.token;
+          }
+        };
+        
+        if (testerPhoneIdSelect.options.length > 1) {
+          testerPhoneIdSelect.selectedIndex = 1;
+          testerPhoneIdSelect.dispatchEvent(new Event('change'));
+        }
+
+      } catch (error) {
+        accountListDiv.innerHTML = `<div class="alert alert-danger mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Error loading accounts: ${error.message}</div>`;
+      }
+    }
+
+    function toggleTokenVisibility(button) {
+      const input = button.previousElementSibling;
+      const icon = button.querySelector('i');
+      
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+      } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+      }
+    }
+
+    document.getElementById('createAccountForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
+      submitBtn.disabled = true;
+      
+      const phoneId = document.getElementById('phoneId').value;
+      const name = document.getElementById('accountName').value;
+
+      try {
+        const response = await fetch('/api/accounts/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone_id: phoneId, name: name })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          showAlert(`Account created successfully!<br><strong>Token:</strong> ${data.account.token}`, 'success', 8000);
+          loadAccounts();
+          e.target.reset();
+        } else {
+          showAlert(`Error: ${data.message}`, 'danger');
+        }
+      } catch (error) {
+        showAlert(`Error: ${error.message}`, 'danger');
+      } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      }
+    });
+
+    async function deleteAccount(phoneId) {
+      if (!confirm(`Are you sure you want to delete account ${phoneId}?`)) return;
+      
+      try {
+        const response = await fetch(`/api/accounts/${phoneId}`, { method: 'DELETE' });
+        const data = await response.json();
+        
+        if (data.success) {
+          showAlert('Account deleted successfully!', 'success');
+          loadAccounts();
+        } else {
+          showAlert(`Error: ${data.message}`, 'danger');
+        }
+      } catch (error) {
+        showAlert(`Error: ${error.message}`, 'danger');
+      }
+    }
+
+    function showAlert(message, type = 'info', duration = 5000) {
+      const alertContainer = document.createElement('div');
+      alertContainer.className = 'position-fixed top-0 start-50 translate-middle-x mt-3';
+      alertContainer.style.zIndex = '9999';
+      
+      alertContainer.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show shadow" role="alert" style="min-width: 400px;">
+          <i class="fas fa-${type === 'success' ? 'check' : type === 'danger' ? 'times' : type === 'warning' ? 'exclamation-triangle' : 'info'}-circle me-2"></i>
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      `;
+      
+      document.body.appendChild(alertContainer);
+      
+      setTimeout(() => {
+        if (alertContainer.parentNode) {
+          alertContainer.remove();
+        }
+      }, duration);
+    }
+
+    // Smooth scrolling for navigation links
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('nav-link-custom')) {
+        e.preventDefault();
+        const target = document.querySelector(e.target.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+          
+          // Update active state
+          document.querySelectorAll('.nav-link-custom').forEach(link => {
+            link.classList.remove('active');
+          });
+          e.target.classList.add('active');
+        }
+      }
+    });
+
+    // Initialize
+    window.onload = () => {
+      populateApiDocumentation();
+      populateApiTesterDropdown();
+      loadAccounts();
+    };
+  </script>
+</body>
+</html>
